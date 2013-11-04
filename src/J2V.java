@@ -18,9 +18,10 @@ public class J2V {
          SymbolTableVisitor symVisitor = new SymbolTableVisitor();
          //Create the symbol table
          root.accept(symVisitor);
-         JumpTable c = new JumpTable(symVisitor.table);
+         JumpTable j = new JumpTable(symVisitor.table);
          //Now implement the functions
-         System.out.print(c.vaporJumpTable);
+         VisitFunctionDefinitions functionDefinitionVisitor = new VisitFunctionDefinitions(symVisitor.table, j);
+         System.out.print(root.accept(functionDefinitionVisitor,0));
       }
       catch (ParseException e) {
          System.out.println(e.toString());

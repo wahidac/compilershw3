@@ -1,100 +1,103 @@
 
+
 import java.util.Enumeration;
 import java.util.HashMap;
 
 import syntaxtree.*;
+import visitor.GJDepthFirst;
 import visitor.GJNoArguDepthFirst;
 
-public class VisitFunctionDefinitions extends GJNoArguDepthFirst<String> {
+public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	HashMap<String, ClassBinding> symbolTable;
 	JumpTable jumpTable;
+	int tempRegisterCounter;
+	int nullCheckCounter;
+	String indentationSpacing;
 	
-	public void setCurrentClassBinding(ClassBinding b) {
-		currentClassBinding = b;
-		typeCalculator.currentClassBinding = currentClassBinding;
-	}
-	
-	public void setCurrentMetodBinding(MethodBinding b) {
-		currentMethodBinding = b;
-		typeCalculator.currentMethodBinding = currentMethodBinding;
-	}
-	
-	public void setCurrentClass(String id) {
-		currentClass = id;
-		typeCalculator.currentClass = currentClass;
-	}
 	
 	public VisitFunctionDefinitions(HashMap<String, ClassBinding> symbolTable, JumpTable jumpTable) {
 		this.symbolTable = symbolTable;
 		this.jumpTable = jumpTable;
+		//Keep track of register names we can use
+		tempRegisterCounter = 0;
+		indentationSpacing = "  ";
 	}
 	
-	//
+	public String getIndentation(Integer indentation) {
+		String ret = "";
+		for(int i = 0; i<indentation;i++) {
+			ret += indentationSpacing;
+		}
+		return ret;
+	}
+	
+	  public String getTempRegister() {
+		   String ret = String.valueOf(tempRegisterCounter);
+		   tempRegisterCounter += 1;
+		   return "t." + ret;
+	  }
+	   
+	
+	 //
 	   // Auto class visitors--probably don't need to be overridden.
 	   //
-	   public Boolean visit(NodeList n) {
-	      Boolean _ret= true;
+	   public String visit(NodeList n, Integer indentation) {
+	      String _ret="";
 	      int _count=0;
 	      for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
-	         _ret = e.nextElement().accept(this);
-	         if(_ret.booleanValue() != true)
-	        	 return false;
+	         _ret += "\n" + e.nextElement().accept(this,indentation);
 	         _count++;
 	      }
 	      return _ret;
 	   }
 
-	   public Boolean visit(NodeListOptional n) {
+	   public String visit(NodeListOptional n, Integer indentation) {
 	      if ( n.present() ) {
-	         Boolean _ret=true;
+	         String _ret="";
 	         int _count=0;
 	         for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
-		         _ret = e.nextElement().accept(this);
-		         if(_ret.booleanValue() != true)
-		        	 return false;
+	            _ret += "\n"+e.nextElement().accept(this,indentation);
 	            _count++;
 	         }
 	         return _ret;
 	      }
 	      else
-	         return true;
+	         return "";
 	   }
 
-	   public Boolean visit(NodeOptional n) {
+	   public String visit(NodeOptional n,Integer indentation) {
 	      if ( n.present() )
-	         return n.node.accept(this);
+	         return n.node.accept(this, indentation);
 	      else
-	         return true;
+	         return "";
 	   }
 
-	   public Boolean visit(NodeSequence n) {
-	      Boolean _ret=true;
+	   public String visit(NodeSequence n,Integer indentation) {
+	      String _ret="";
 	      int _count=0;
 	      for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
-		         _ret = e.nextElement().accept(this);
-		         if(_ret.booleanValue() != true) 
-		        	 return false;
-		         _count++;
+	         _ret += "\n" + e.nextElement().accept(this, indentation);
+	         _count++;
 	      }
 	      return _ret;
 	   }
 
-	   public Boolean visit(NodeToken n) { System.out.println("At Node Token!"); return true;  }
+	   public String visit(NodeToken n) {  System.out.println("At Node Token!"); return "";  }
 	
+	//
+	   // User-generated visitor methods below
+	   //
 	
-
 	   /**
 	    * f0 -> MainClass()
 	    * f1 -> ( TypeDeclaration() )*
 	    * f2 -> <EOF>
 	    */
-	   public Boolean visit(Goal n) {
-	      Boolean _ret=true;
-	      _ret = n.f0.accept(this);
-	      if(!_ret)
-	    	  return _ret;
-	      else
-	    	  return n.f1.accept(this);
+	   public String visit(Goal n, Integer indentation) {
+	      String _ret="";
+	      _ret = n.f0.accept(this,indentation);
+	     // _ret += n.f1.accept(this,indentation);
+	      return jumpTable.vaporJumpTable + "\n\n"+ _ret;
 	   }
 	   
 	   /**
@@ -117,135 +120,15 @@ public class VisitFunctionDefinitions extends GJNoArguDepthFirst<String> {
 	    * f16 -> "}"
 	    * f17 -> "}"
 	    */
-	   public Boolean visit(MainClass n) {
-		  String id = SymbolTableVisitor.identifierForIdentifierNode(n.f1);
-		  //Set scopes 
-		  setCurrentClassBinding(symbolTable.get(id));
-		  setCurrentMetodBinding(currentClassBinding.getMethodBindings().get("main"));
-		  setCurrentClass(id);
-		  Boolean _ret = n.f15.accept(this);
-		  
-		  //Reset scope
-		  setCurrentClassBinding(null);
-		  setCurrentMetodBinding(null);
-		  setCurrentClass(null);
-		  
-	      return _ret;
-	   }
-	   
-	   /**
-	    * f0 -> ClassDeclaration()
-	    *       | ClassExtendsDeclaration()
-	    */
-	   public Boolean visit(TypeDeclaration n) {
-	      return n.f0.accept(this);
-	   }
-	   
-	   /**
-	    * f0 -> "class"
-	    * f1 -> Identifier()
-	    * f2 -> "{"
-	    * f3 -> ( VarDeclaration() )*
-	    * f4 -> ( MethodDeclaration() )*
-	    * f5 -> "}"
-	    */
-	   public Boolean visit(ClassDeclaration n) {
-	      Boolean _ret=true;
-		  String id = SymbolTableVisitor.identifierForIdentifierNode(n.f1);
-		  
-		  //Set scopes 
-		  setCurrentClassBinding(symbolTable.get(id));
-		  setCurrentMetodBinding(null);
-		  setCurrentClass(id);
-		  
-	      _ret = n.f4.accept(this);
+	   public String visit(MainClass n, Integer indentation) {
+	      String _ret="func Main()";
+	      //Visit statements.
 	      
-	      //Reset scopes
-		  setCurrentClassBinding(null);
-		  setCurrentMetodBinding(null);
-		  setCurrentClass(null);
-		  
-	      return _ret;
+	      //NOTE: need to consider uninitialized vars? if so, need to visit var declarations and 
+	      //initialize the variables.
+	      return _ret + n.f15.accept(this,indentation+1) + "\n" + getIndentation(indentation+1)+"ret";
 	   }
-	   
-	   /**
-	    * f0 -> "public"
-	    * f1 -> Type()
-	    * f2 -> Identifier()
-	    * f3 -> "("
-	    * f4 -> ( FormalParameterList() )?
-	    * f5 -> ")"
-	    * f6 -> "{"
-	    * f7 -> ( VarDeclaration() )*
-	    * f8 -> ( Statement() )*
-	    * f9 -> "return"
-	    * f10 -> Expression()
-	    * f11 -> ";"
-	    * f12 -> "}"
-	    */
-	   public Boolean visit(MethodDeclaration n) {
-	      Boolean _ret=false;
-		  String id = SymbolTableVisitor.identifierForIdentifierNode(n.f2);
-		  setCurrentMetodBinding(currentClassBinding.getMethodBindings().get(id));
-		  _ret = n.f8.accept(this);
-		  //Need to make sure return type is what it should be
-		  VarType v = n.f10.accept(typeCalculator,symbolTable);
-		  VarType expectedReturnType = currentMethodBinding.returnValue;
-		  
-		  if(!VarType.canAssignVarType(expectedReturnType, v, symbolTable))
-			  _ret = false;
-		  setCurrentMetodBinding(null);
-		
-	      return _ret;
-	   }
-	   
-	   
-	   /**
-	    * f0 -> "class"
-	    * f1 -> Identifier()
-	    * f2 -> "extends"
-	    * f3 -> Identifier()
-	    * f4 -> "{"
-	    * f5 -> ( VarDeclaration() )*
-	    * f6 -> ( MethodDeclaration() )*
-	    * f7 -> "}"
-	    */
-	   public Boolean visit(ClassExtendsDeclaration n) {
-		   	  Boolean _ret=true;
-			  String id = SymbolTableVisitor.identifierForIdentifierNode(n.f1);
-			  
-			  //Set scopes 
-			  setCurrentClassBinding(symbolTable.get(id));
-			  setCurrentMetodBinding(null);
-			  setCurrentClass(id);
-			  
-			  assert(!currentClassBinding.parentClass.isEmpty());
-			  
-		      _ret = n.f6.accept(this);
-		      
-		      //Reset scopes
-			  setCurrentClassBinding(null);
-			  setCurrentMetodBinding(null);
-			  setCurrentClass(null);
-			  
-		      return _ret;
-	   }
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-	   
+   
 	   /**
 	    * f0 -> Block()
 	    *       | AssignmentStatement()
@@ -254,19 +137,9 @@ public class VisitFunctionDefinitions extends GJNoArguDepthFirst<String> {
 	    *       | WhileStatement()
 	    *       | PrintStatement()
 	    */
-	   public Boolean visit(Statement n) {
-	      return n.f0.accept(this);
+	   public String visit(Statement n, Integer indentation) {
+	      return n.f0.accept(this, indentation);
 	   }
-	   
-	   /**
-	    * f0 -> "{"
-	    * f1 -> ( Statement() )*
-	    * f2 -> "}"
-	    */
-	   public Boolean visit(Block n) {
-	      return n.f1.accept(this);
-	   }
-	   
 	   
 	   /**
 	    * f0 -> Identifier()
@@ -274,98 +147,210 @@ public class VisitFunctionDefinitions extends GJNoArguDepthFirst<String> {
 	    * f2 -> Expression()
 	    * f3 -> ";"
 	    */
-	   public Boolean visit(AssignmentStatement n) {
-		  Boolean ret = false;
-		  VarType v1 = n.f0.accept(typeCalculator, symbolTable);
-	      VarType v2 = n.f2.accept(typeCalculator, symbolTable);
+	   public String visit(AssignmentStatement n, Integer indentation) {
+	      String expressionResult = n.f2.accept(this, indentation);
+	      String registerWithResult = returnExpressionResultRegister(expressionResult);
+	      String assignmentStr = SymbolTableVisitor.identifierForIdentifierNode(n.f0) + " = " + registerWithResult;
+	      String ret = expressionResult + "\n" + getIndentation(indentation) + assignmentStr;
+	      return ret;
+	   }
+	   
+	   
+	   
+	   //Convert each expression to vapor code and store the result of the
+	   //expression in a temporary register at the end of the translated
+	   //block of code so that we can use the expression value.
+	   //Expressions:
+	   /**
+	    * f0 -> AndExpression()
+	    *       | CompareExpression()
+	    *       | PlusExpression()
+	    *       | MinusExpression()
+	    *       | TimesExpression()
+	    *       | ArrayLookup()
+	    *       | ArrayLength()
+	    *       | MessageSend()
+	    *       | PrimaryExpression()
+	    */
+	   public String visit(Expression n, Integer indentation) {
+	      return n.f0.accept(this, indentation);
+	   }
+	   
+	   /**
+	    * f0 -> PrimaryExpression()
+	    * f1 -> "&&"
+	    * f2 -> PrimaryExpression()
+	    */
+	   public String visit(AndExpression n, Integer indentation) {
+	      String v1 = n.f0.accept(this, argu);
+	      String v2 = n.f2.accept(this,argu);
 	      
-		  if(v1 == null || v2 == null)
-			  return false;
-		  
-	      return VarType.canAssignVarType(v1, v2, symbolTable);
+	      n.f1.accept(this, argu);
+	      n.f2.accept(this, argu);
+	      return _ret;
 	   }
 	   
+	   
+	   
+	   
+	      
 	   /**
-	    * f0 -> Identifier()
-	    * f1 -> "["
-	    * f2 -> Expression()
-	    * f3 -> "]"
-	    * f4 -> "="
-	    * f5 -> Expression()
-	    * f6 -> ";"
+	    * f0 -> IntegerLiteral()
+	    *       | TrueLiteral()
+	    *       | FalseLiteral()
+	    *       | Identifier()
+	    *       | ThisExpression()
+	    *       | ArrayAllocationExpression()
+	    *       | AllocationExpression()
+	    *       | NotExpression()
+	    *       | BracketExpression()
 	    */
-	   public Boolean visit(ArrayAssignmentStatement n) {
-		  VarType v1 = n.f0.accept(typeCalculator, symbolTable);
-		  VarType v2 = n.f2.accept(typeCalculator, symbolTable);
-		  VarType v3 = n.f5.accept(typeCalculator, symbolTable);
-		  
-		  if(v1 == null || v2 == null || v3 == null)
-			  return false;
-
-		  if(v1.type == VariableType.INT_ARRAY && v2.type == VariableType.INTEGER
-				  && v3.type == VariableType.INTEGER) {
-			  return true;
-		  } else {
-			  return false;
-		  }
+	   public String visit(PrimaryExpression n, Integer indentation) {
+		   String ret = n.f0.choice.accept(this, indentation);
+		   
+		   if(n.f0.which == 6) {
+			   //These expressions will already assign result to a temp reg.
+			   return ret;
+		   }
+		   String registerName = getTempRegister();
+		   return getIndentation(indentation) + registerName + " = " + ret;
+	   }
+	   
+	   public String returnExpressionResultRegister(String expressionInVapor) {
+		   String[] lines = expressionInVapor.split("\\n+");
+		   String lastLine = lines[lines.length-1];
+		   //Last line assigns expression result to a regsiter
+		   String[] splitLines = lastLine.split("\\s+");
+		   String register = splitLines[0];
+		   if(register.isEmpty())
+			   return splitLines[1];
+		   else
+			   return register;
+	   }
+	   
+	   
+	   /**
+	    * f0 -> <INTEGER_LITERAL>
+	    */
+	   public String visit(IntegerLiteral n, Integer indentation) {
+		   return n.f0.tokenImage;
 	   }
 	   
 	   /**
-	    * f0 -> "if"
-	    * f1 -> "("
-	    * f2 -> Expression()
+	    * f0 -> "true"
+	    */
+	   public String visit(TrueLiteral n, Integer indentation) {
+	      return "1";
+	   }	   
+	   
+	   /**
+	    * f0 -> "false"
+	    */
+	   public String visit(FalseLiteral n, Integer indentation) {
+		  return "0";
+	   }
+	   
+	   /**
+	    * f0 -> <IDENTIFIER>
+	    */
+	   public String visit(Identifier n, Integer indentation) {
+	      return SymbolTableVisitor.identifierForIdentifierNode(n);
+	   }
+	   
+	   /**
+	    * f0 -> "this"
+	    */
+	   public String visit(ThisExpression n, Integer indentation) {
+	      return "this";
+	   }
+	   
+	   /**
+	    * f0 -> "new"
+	    * f1 -> "int"
+	    * f2 -> "["
+	    * f3 -> Expression()
+	    * f4 -> "]"
+	    */
+	  /* public R visit(ArrayAllocationExpression n) {
+	      R _ret=null;
+	      n.f0.accept(this);
+	      n.f1.accept(this);
+	      n.f2.accept(this);
+	      n.f3.accept(this);
+	      n.f4.accept(this);
+	      return _ret;
+	   }*/
+	   
+	   /**
+	    * f0 -> "new"
+	    * f1 -> Identifier()
+	    * f2 -> "("
 	    * f3 -> ")"
-	    * f4 -> Statement()
-	    * f5 -> "else"
-	    * f6 -> Statement()
 	    */
-	   public Boolean visit(IfStatement n) {	  
-		  Boolean _ret = true;
-		  VarType v1 = n.f2.accept(typeCalculator, symbolTable);
-		  if(v1 == null)
-			  return false;
-		  
-		  if(v1.type != VariableType.BOOLEAN)
-			  return false;
-			  
-		  //Make sure f4 and f6 statements all type check
-		  Boolean b1 = n.f4.accept(this);
-		  Boolean b2 = n.f6.accept(this);
-		  
-	      return b1 && b2;
+	   public String visit(AllocationExpression n, Integer indentation) {
+		  String className = SymbolTableVisitor.identifierForIdentifierNode(n.f1);
+		  ClassBinding c = symbolTable.get(className);
+		  int numBytesToAlloc = c.numBytesToRepresent;
+		  String temporaryReg = getTempRegister();
+		  //Need to allocate memory on the heap
+		  String allocString = assign(temporaryReg,"HeapAllocZ(" + String.valueOf(numBytesToAlloc) + ")",indentation);
+		  //Now need to initialize first 4 bytes to point to the corresponding jump table
+		  String jumpTableLabel = ":methods_"+className;
+		  allocString = concatentateInstructions(allocString,assign(accessMemory(temporaryReg, 0),jumpTableLabel,indentation));
+		  allocString = concatentateInstructions(allocString, checkForNull(temporaryReg, indentation));
+		  allocString = concatentateInstructions(allocString, assign(getTempRegister(), temporaryReg, indentation));
+		  //NOTE: need to consider case in which main class is allocated?
+	      return allocString;
 	   }
 	   
-	   /**
-	    * f0 -> "while"
-	    * f1 -> "("
-	    * f2 -> Expression()
-	    * f3 -> ")"
-	    * f4 -> Statement()
-	    */
-	   public Boolean visit(WhileStatement n) {
-	      VarType v1 = n.f2.accept(typeCalculator, symbolTable);
-	      if(v1 == null)
-			  return false;
-	      if(v1.type != VariableType.BOOLEAN)
-			  return false;
-	      return n.f4.accept(this);
-	   }
-	   
-	   /**
-	    * f0 -> "System.out.println"
-	    * f1 -> "("
-	    * f2 -> Expression()
-	    * f3 -> ")"
-	    * f4 -> ";"
-	    */
-	   public Boolean visit(PrintStatement n) {
-	      VarType v1 = n.f2.accept(typeCalculator, symbolTable);
-	      if(v1 == null)
-			  return false;
-	      if(v1.type == VariableType.INTEGER)
-	    	  return true;
-	      else
-	    	  return false;
-	   }
 	
+	   /**
+	    * f0 -> "!"
+	    * f1 -> Expression()
+	    */
+	/*   public String visit(NotExpression n, Integer indentation) {
+	      R _ret=null;
+	      n.f0.accept(this);
+	      n.f1.accept(this);
+	      return _ret;
+	   }
+	  */
+	   
+	   /**
+	    * f0 -> "("
+	    * f1 -> Expression()
+	    * f2 -> ")"
+	    */
+	 /*  public R visit(BracketExpression n) {
+	      R _ret=null;
+	      n.f0.accept(this);
+	      n.f1.accept(this);
+	      n.f2.accept(this);
+	      return _ret;
+	   }*/
+	   
+	   
+	   //Commonly used strings
+	   private String accessMemory(String var, int offset) {
+		   return "[" + var + "+" + String.valueOf(offset) + "]";
+	   }
+	   
+	   private String assign(String v1, String v2, Integer indentation) {
+		   return getIndentation(indentation) + v1 + " = " + v2;
+	   }
+	   
+	   private String concatentateInstructions(String v1, String v2) {
+		   return v1 + "\n" + v2;
+	   }
+	   
+	   private String checkForNull(String var, Integer indentation) {
+		   String nullLabel = "null"+String.valueOf(nullCheckCounter);
+		   nullCheckCounter += 1;
+		   String ret = getIndentation(indentation) + "if " + var + " goto :" + nullLabel;
+		   String errorString = getIndentation(indentation+1)+"Error(\"null pointer\")";
+		   String jumpLabel = getIndentation(indentation) + nullLabel + ":";
+		   return concatentateInstructions(concatentateInstructions(ret,errorString),jumpLabel);
+	   }
+	   
+
 }

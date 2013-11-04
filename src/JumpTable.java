@@ -39,6 +39,11 @@ public class JumpTable {
 		for(Map.Entry<String, ClassBinding> c:symbolTable.entrySet()) {
 			String className = c.getKey();
 			ClassBinding binding = c.getValue();
+			if(binding.getMethodBindings().size() == 1 &&
+				binding.getMethodBinding("main", symbolTable) != null) {
+					//Main function
+					continue;
+				}
 			HashMap<String,Integer> methodOffsets = new HashMap<String,Integer>();
 			methodIndexInJumpTable.put(className, methodOffsets);
 			//Create the jump table for this class

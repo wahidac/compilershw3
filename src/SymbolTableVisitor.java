@@ -23,7 +23,6 @@ public class SymbolTableVisitor extends DepthFirstVisitor {
 		   tableSuccessfullyCreated = true;
 	   }
 	   
-	   
 	   /**
 	    * Grammar production:
 	    * f0 -> "class"
