@@ -1,6 +1,27 @@
-
-
 func Main()
-  t.0 = gs
+  t.0 = 1
   f = t.0
+  t.1 = 1
+  g = t.1
+  t.2 = f
+  t.3 = g
+  if0 t.2 goto :else0
+    t.4 = t.3
+    goto :else_end0
+  else0:
+    t.4 = 0
+  else_end0:
+  t.4 = t.4
+  e = t.4
+  t.5 = 2
+  b = t.5
+  t.6 = e
+  if0 t.6 goto :else1
+    t.7 = b
+    PrintIntS(t.7)
+    goto :else_end1
+  else1:
+    t.8 = 0
+    PrintIntS(t.8)
+  else_end1:
   ret

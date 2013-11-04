@@ -9,9 +9,13 @@ class Test{
 	
 	//j = new Jamba();
 	f = true;
-	g = false;
+	g = true;
 	e = f && g;
-	
+	b = 2;
+	if(e)
+		System.out.println(b);
+	else
+		System.out.println(0);
    }
 }
 

@@ -156,6 +156,38 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	      return ret;
 	   }
 	   
+	   /**
+	    * f0 -> "if"
+	    * f1 -> "("
+	    * f2 -> Expression()
+	    * f3 -> ")"
+	    * f4 -> Statement()
+	    * f5 -> "else"
+	    * f6 -> Statement()
+	    */
+	   public String visit(IfStatement n, Integer indentation) {
+	      String evalExpression1 = n.f2.accept(this,indentation);
+	      String resultReg = returnExpressionResultRegister(evalExpression1);
+	      String stmt1 = n.f4.accept(this,indentation+1);
+	      String stmt2 = n.f6.accept(this,indentation+1);
+	      return concatentateInstructions(evalExpression1, ifStatement(resultReg, stmt1, stmt2, indentation));
+	   }
+	   
+	   
+	   /**
+	    * f0 -> "System.out.println"
+	    * f1 -> "("
+	    * f2 -> Expression()
+	    * f3 -> ")"
+	    * f4 -> ";"
+	    */
+	   public String visit(PrintStatement n, Integer indentation) {
+	      String evalExpression = n.f2.accept(this,indentation);
+	      String resultReg = returnExpressionResultRegister(evalExpression);
+	      String printString = getIndentation(indentation) + "PrintIntS("+resultReg+")";
+	      return concatentateInstructions(evalExpression,printString);
+	   }
+	   
 	   
 	   
 	   //Convert each expression to vapor code and store the result of the
@@ -192,7 +224,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	      String finalResultReg = getTempRegister();
 	      
 	      //Use if-else statement to evaluate this expression
-	      String and = ifStatement(resultReg1, assign(finalResultReg, "1", indentation), assign(finalResultReg, resultReg2, indentation), indentation);
+	      String and = ifStatement(resultReg1, assign(finalResultReg, resultReg2, indentation+1), assign(finalResultReg, "0", indentation+1), indentation);
 	      //Follow our convention of leaving last line to represent final value of the evaluated expression
 	      return concatentateInstructions(v1,concatentateInstructions(v2,concatentateInstructions(and, assign(finalResultReg,finalResultReg,indentation))));
 	   }
@@ -361,15 +393,17 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   return concatentateInstructions(concatentateInstructions(ret,errorString),jumpLabel);
 	   }
 	   
-	   //Simulate an if else statement using vapor jumps
+	   //Simulate an if else statement using vapor jumps. t1 must be a boolean and
+	   //t2 and t3 can be arbitrary blocks of code
 	   private String ifStatement(String t1, String t2, String t3, Integer indentation) {
 		   String jumpLabelElse = "else"+String.valueOf(ifCounter);
 		   String jumpLabelElseEnd = "else_end"+String.valueOf(ifCounter);
+		   ifCounter += 1;
 		   //if false, move to else
 		   String ifString = getIndentation(indentation) + "if0 " + t1 + " goto " + ":" +jumpLabelElse;
-		   ifString = concatentateInstructions(ifString, indentationSpacing + t2);
-		   String elseString = getIndentation(indentation) + ":"+jumpLabelElse;
-		   elseString = concatentateInstructions(concatentateInstructions(elseString, indentationSpacing + t3),getIndentation(indentation)+jumpLabelElseEnd + ":");
+		   ifString = concatentateInstructions(ifString, concatentateInstructions(t2,getIndentation(indentation+1)+"goto " +":" +jumpLabelElseEnd));
+		   String elseString = getIndentation(indentation) + jumpLabelElse + ":";
+		   elseString = concatentateInstructions(concatentateInstructions(elseString,t3),getIndentation(indentation)+jumpLabelElseEnd + ":");
 		   return concatentateInstructions(ifString, elseString);
 	   }
 	   
