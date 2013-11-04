@@ -4,9 +4,13 @@ class Test{
 	int c;
 	boolean f;
 	boolean g;
+	boolean e;
 	Jamba j;
 	
-	j = new Jamba();
+	//j = new Jamba();
+	f = true;
+	g = false;
+	e = f && g;
 	
    }
 }

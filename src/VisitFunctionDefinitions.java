@@ -12,6 +12,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	JumpTable jumpTable;
 	int tempRegisterCounter;
 	int nullCheckCounter;
+	int ifCounter;
 	String indentationSpacing;
 	
 	
@@ -182,12 +183,18 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    * f2 -> PrimaryExpression()
 	    */
 	   public String visit(AndExpression n, Integer indentation) {
-	      String v1 = n.f0.accept(this, argu);
-	      String v2 = n.f2.accept(this,argu);
+	      String v1 = n.f0.accept(this, indentation);
+	      String v2 = n.f2.accept(this,indentation);
 	      
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return _ret;
+	      //Get result of v1
+	      String resultReg1 = returnExpressionResultRegister(v1);
+	      String resultReg2 = returnExpressionResultRegister(v2);
+	      String finalResultReg = getTempRegister();
+	      
+	      //Use if-else statement to evaluate this expression
+	      String and = ifStatement(resultReg1, assign(finalResultReg, "1", indentation), assign(finalResultReg, resultReg2, indentation), indentation);
+	      //Follow our convention of leaving last line to represent final value of the evaluated expression
+	      return concatentateInstructions(v1,concatentateInstructions(v2,concatentateInstructions(and, assign(finalResultReg,finalResultReg,indentation))));
 	   }
 	   
 	   
@@ -222,10 +229,12 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   //Last line assigns expression result to a regsiter
 		   String[] splitLines = lastLine.split("\\s+");
 		   String register = splitLines[0];
-		   if(register.isEmpty())
-			   return splitLines[1];
-		   else
-			   return register;
+		   if(register.isEmpty()) {
+			   register = splitLines[1];
+		   }
+		   
+		   assert(register.startsWith("t."));		   
+		   return register;
 	   }
 	   
 	   
@@ -350,6 +359,18 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   String errorString = getIndentation(indentation+1)+"Error(\"null pointer\")";
 		   String jumpLabel = getIndentation(indentation) + nullLabel + ":";
 		   return concatentateInstructions(concatentateInstructions(ret,errorString),jumpLabel);
+	   }
+	   
+	   //Simulate an if else statement using vapor jumps
+	   private String ifStatement(String t1, String t2, String t3, Integer indentation) {
+		   String jumpLabelElse = "else"+String.valueOf(ifCounter);
+		   String jumpLabelElseEnd = "else_end"+String.valueOf(ifCounter);
+		   //if false, move to else
+		   String ifString = getIndentation(indentation) + "if0 " + t1 + " goto " + ":" +jumpLabelElse;
+		   ifString = concatentateInstructions(ifString, indentationSpacing + t2);
+		   String elseString = getIndentation(indentation) + ":"+jumpLabelElse;
+		   elseString = concatentateInstructions(concatentateInstructions(elseString, indentationSpacing + t3),getIndentation(indentation)+jumpLabelElseEnd + ":");
+		   return concatentateInstructions(ifString, elseString);
 	   }
 	   
 
