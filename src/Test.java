@@ -7,16 +7,17 @@ class Test{
 	boolean e;
 	Jamba j;
 	
-	//j = new Jamba();
+	j = new Jamba();
 	f = true;
 	g = true;
 	e = f && g;
-	b = 2;
-	if(e)
+	b = (50);
+	c = 3;
+	while(!(b < 20)) {
 		System.out.println(b);
-	else
-		System.out.println(0);
-   }
+		b = b - c;
+	}
+    }
 }
 
 
@@ -28,4 +29,23 @@ class Jamba {
 	public int yolo(int a) {
 		return 3;
 	}
+	
+	public int jookie(int a, boolean mojo) {
+		a = 4;
+		mojo = false;
+		if(mojo)
+			a = a + 2;
+		else
+			a = a + 10;
+		return a;
+	}
+}
+
+class Mokie {
+	boolean a;
+	
+	public boolean broko(int a) {
+		return true;
+	}
+	
 }

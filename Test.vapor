@@ -1,27 +1,84 @@
+const methods_Mokie
+  :Mokie.broko
+
+const methods_Jamba
+  :Jamba.yolo
+  :Jamba.jookie
+
 func Main()
-  t.0 = 1
-  f = t.0
-  t.1 = 1
-  g = t.1
-  t.2 = f
-  t.3 = g
-  if0 t.2 goto :else0
-    t.4 = t.3
+  t.0 = HeapAllocZ(16)
+  [t.0+0] = :methods_Jamba
+  if t.0 goto :null0
+    Error("null pointer")
+  null0:
+  t.1 = t.0
+  j = t.1
+  t.2 = 1
+  f = t.2
+  t.3 = 1
+  g = t.3
+  t.4 = f
+  t.5 = g
+  if0 t.4 goto :else0
+    t.6 = t.5
     goto :else_end0
   else0:
-    t.4 = 0
+    t.6 = 0
   else_end0:
-  t.4 = t.4
-  e = t.4
-  t.5 = 2
-  b = t.5
-  t.6 = e
-  if0 t.6 goto :else1
-    t.7 = b
-    PrintIntS(t.7)
-    goto :else_end1
-  else1:
-    t.8 = 0
-    PrintIntS(t.8)
-  else_end1:
+  t.6 = t.6
+  e = t.6
+  t.7 = 50
+  b = t.7
+  t.8 = 3
+  c = t.8
+  while0_top:
+    t.9 = b
+    t.10 = 20
+    t.11 = LtS(t.9 t.10)
+    t.12 = Sub(1 t.11)
+    if0 t.12 goto :else1
+
+      t.13 = b
+      PrintIntS(t.13)
+      t.14 = b
+      t.15 = c
+      t.16 = Sub(t.14 t.15)
+      b = t.16
+      goto :else_end1
+    else1:
+      goto :while0_end
+    else_end1:
+    goto :while0_top
+  while0_end:
   ret
+
+func Jamba.yolo(this a)
+
+  t.17 = 3
+  ret t.17
+func Jamba.jookie(this a mojo)
+
+  t.18 = 4
+  a = t.18
+  t.19 = 0
+  mojo = t.19
+  t.20 = mojo
+  if0 t.20 goto :else2
+    t.21 = a
+    t.22 = 2
+    t.23 = Add(t.21 t.22)
+    a = t.23
+    goto :else_end2
+  else2:
+    t.24 = a
+    t.25 = 10
+    t.26 = Add(t.24 t.25)
+    a = t.26
+  else_end2:
+  t.27 = a
+  ret t.27
+
+func Mokie.broko(this a)
+
+  t.28 = 1
+  ret t.28

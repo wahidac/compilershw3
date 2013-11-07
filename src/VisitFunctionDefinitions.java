@@ -9,10 +9,12 @@ import visitor.GJNoArguDepthFirst;
 
 public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	HashMap<String, ClassBinding> symbolTable;
+	String currentClass;
 	JumpTable jumpTable;
 	int tempRegisterCounter;
 	int nullCheckCounter;
 	int ifCounter;
+	int whileCounter;
 	String indentationSpacing;
 	
 	
@@ -22,6 +24,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		//Keep track of register names we can use
 		tempRegisterCounter = 0;
 		indentationSpacing = "  ";
+		currentClass = "";
 	}
 	
 	public String getIndentation(Integer indentation) {
@@ -32,14 +35,14 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		return ret;
 	}
 	
-	  public String getTempRegister() {
-		   String ret = String.valueOf(tempRegisterCounter);
-		   tempRegisterCounter += 1;
-		   return "t." + ret;
-	  }
+    public String getTempRegister() {
+	    String ret = String.valueOf(tempRegisterCounter);
+		tempRegisterCounter += 1;
+		return "t." + ret;
+    }
 	   
 	
-	 //
+	   //
 	   // Auto class visitors--probably don't need to be overridden.
 	   //
 	   public String visit(NodeList n, Integer indentation) {
@@ -97,7 +100,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	   public String visit(Goal n, Integer indentation) {
 	      String _ret="";
 	      _ret = n.f0.accept(this,indentation);
-	     // _ret += n.f1.accept(this,indentation);
+	      _ret += n.f1.accept(this,indentation);
 	      return jumpTable.vaporJumpTable + "\n\n"+ _ret;
 	   }
 	   
@@ -129,6 +132,112 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	      //initialize the variables.
 	      return _ret + n.f15.accept(this,indentation+1) + "\n" + getIndentation(indentation+1)+"ret";
 	   }
+	   
+	   /**
+	    * f0 -> ClassDeclaration()
+	    *       | ClassExtendsDeclaration()
+	    */
+	   public String visit(TypeDeclaration n, Integer indentation) {
+	     return n.f0.accept(this,indentation);
+	   }
+	   
+	   /**
+	    * f0 -> "class"
+	    * f1 -> Identifier()
+	    * f2 -> "{"
+	    * f3 -> ( VarDeclaration() )*
+	    * f4 -> ( MethodDeclaration() )*
+	    * f5 -> "}"
+	    */
+	   public String visit(ClassDeclaration n, Integer indentation) {
+	      //Set what class we're in
+		  currentClass = SymbolTableVisitor.identifierForIdentifierNode(n.f1);
+		  //NOTE: if uninitialized vars allowed, where do we initialize class fields?
+		  return n.f4.accept(this,indentation);
+	   }
+	   
+	   /**
+	    * f0 -> "class"
+	    * f1 -> Identifier()
+	    * f2 -> "extends"
+	    * f3 -> Identifier()
+	    * f4 -> "{"
+	    * f5 -> ( VarDeclaration() )*
+	    * f6 -> ( MethodDeclaration() )*
+	    * f7 -> "}"
+	    */
+	   public String visit(ClassExtendsDeclaration n, Integer indentation) {
+		   //Set what class we're in
+		   //NOTE: need way to copy the extended method declarations
+		   currentClass = SymbolTableVisitor.identifierForIdentifierNode(n.f1);
+	       //NOTE: if uninitialized vars allowed, where do we initialize class fields?
+		   return n.f6.accept(this,indentation);
+	   }
+	   
+	   /**
+	    * f0 -> "public"
+	    * f1 -> Type()
+	    * f2 -> Identifier()
+	    * f3 -> "("
+	    * f4 -> ( FormalParameterList() )?
+	    * f5 -> ")"
+	    * f6 -> "{"
+	    * f7 -> ( VarDeclaration() )*
+	    * f8 -> ( Statement() )*
+	    * f9 -> "return"
+	    * f10 -> Expression()
+	    * f11 -> ";"
+	    * f12 -> "}"
+	    */
+	   public String visit(MethodDeclaration n, Integer indentation) {
+		   String methodName = SymbolTableVisitor.identifierForIdentifierNode(n.f2);
+		   //NOTE: unitialized variables?
+		   assert(!currentClass.isEmpty());
+		   methodName = currentClass + "." + methodName;
+		   String functionArguments = n.f4.accept(this,indentation);
+		   String methodDeclaration = getIndentation(indentation) + "func" + " " + methodName + "(this " + functionArguments + ")";
+		   
+		   String statements = n.f8.accept(this, indentation + 1);
+		   String evalReturnExpression = n.f10.accept(this,indentation+1);
+		   String methodString = concatentateInstructions(methodDeclaration, statements);
+		   methodString = concatentateInstructions(methodString, evalReturnExpression);
+		   String finalRegResult = returnExpressionResultRegister(evalReturnExpression);
+		   String returnString = getIndentation(indentation+1) + "ret " + finalRegResult;
+		   methodString = concatentateInstructions(methodString, returnString);
+	       return methodString;
+	   }
+	   
+	   /**
+	    * f0 -> FormalParameter()
+	    * f1 -> ( FormalParameterRest() )*
+	    */
+	   public String visit(FormalParameterList n, Integer indentation) {
+		  String param = n.f0.accept(this, indentation);
+		  String parameters = param;
+		  Enumeration<Node> e = n.f1.elements();
+		  while(e.hasMoreElements()) {
+			  param = e.nextElement().accept(this,indentation);
+			  parameters += " " + param;
+		  }
+		  return parameters;
+	   }
+	   
+	   /**
+	    * f0 -> Type()
+	    * f1 -> Identifier()
+	    */
+	   public String visit(FormalParameter n, Integer indentation) {
+	      return SymbolTableVisitor.identifierForIdentifierNode(n.f1);
+	   }
+
+	   /**
+	    * f0 -> ","
+	    * f1 -> FormalParameter()
+	    */
+	   public String visit(FormalParameterRest n, Integer indentation) {
+	      return n.f1.accept(this, indentation);
+	   }
+
    
 	   /**
 	    * f0 -> Block()
@@ -141,6 +250,16 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	   public String visit(Statement n, Integer indentation) {
 	      return n.f0.accept(this, indentation);
 	   }
+	   
+	   /**
+	    * f0 -> "{"
+	    * f1 -> ( Statement() )*
+	    * f2 -> "}"
+	    */
+	   public String visit(Block n, Integer indentation) {
+	      return n.f1.accept(this,indentation);
+	   }
+
 	   
 	   /**
 	    * f0 -> Identifier()
@@ -172,6 +291,31 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	      String stmt2 = n.f6.accept(this,indentation+1);
 	      return concatentateInstructions(evalExpression1, ifStatement(resultReg, stmt1, stmt2, indentation));
 	   }
+	   
+	   /**
+	    * f0 -> "while"
+	    * f1 -> "("
+	    * f2 -> Expression()
+	    * f3 -> ")"
+	    * f4 -> Statement()
+	    */
+	   public String visit(WhileStatement n, Integer indentation ) {
+	      String evalExpression = n.f2.accept(this,indentation+1);
+	      String resultReg = returnExpressionResultRegister(evalExpression);
+	      String statement = n.f4.accept(this,indentation+2);
+	      
+	      String whileLabel = "while" + String.valueOf(whileCounter);
+	      whileCounter++;
+	      String whileString = getIndentation(indentation) + whileLabel + "_top:";
+	      whileString = concatentateInstructions(whileString, evalExpression);
+	      //If result is true, execute while loop statement, else goto end
+	      String checkCondition = ifStatement(resultReg,statement,gotoLabel(whileLabel+"_end", indentation+2),indentation+1);
+	      checkCondition = concatentateInstructions(checkCondition, gotoLabel(whileLabel + "_top", indentation+1));
+	      checkCondition = concatentateInstructions(checkCondition,getIndentation(indentation) + whileLabel + "_end:");
+	      checkCondition = concatentateInstructions(whileString, checkCondition);
+	      return checkCondition;
+	   }
+
 	   
 	   
 	   /**
@@ -229,8 +373,73 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	      return concatentateInstructions(v1,concatentateInstructions(v2,concatentateInstructions(and, assign(finalResultReg,finalResultReg,indentation))));
 	   }
 	   
+	   /**
+	    * f0 -> PrimaryExpression()
+	    * f1 -> "<"
+	    * f2 -> PrimaryExpression()
+	    */
+	   public String visit(CompareExpression n, Integer indentation) {
+		   String v1 = n.f0.accept(this, indentation);
+		   String v2 = n.f2.accept(this,indentation);
+		      
+		   //Get result of v1
+		   String resultReg1 = returnExpressionResultRegister(v1);
+		   String resultReg2 = returnExpressionResultRegister(v2);
+		   String finalResultReg = getTempRegister();
+		   String comparison = assign(finalResultReg,"LtS(" +resultReg1 + " " + resultReg2 + ")",indentation);
+		   return concatentateInstructions(v1, concatentateInstructions(v2, comparison));
+	   }
 	   
+	   /**
+	    * f0 -> PrimaryExpression()
+	    * f1 -> "+"
+	    * f2 -> PrimaryExpression()
+	    */
+	   public String visit(PlusExpression n, Integer indentation) {
+		   String v1 = n.f0.accept(this, indentation);
+		   String v2 = n.f2.accept(this,indentation);
+		      
+		   //Get result of v1
+		   String resultReg1 = returnExpressionResultRegister(v1);
+		   String resultReg2 = returnExpressionResultRegister(v2);
+		   String finalResultReg = getTempRegister();
+		   String addition = assign(finalResultReg,"Add(" + resultReg1 + " " + resultReg2 + ")",indentation);
+		   return concatentateInstructions(v1, concatentateInstructions(v2, addition));
+	   }	   
 	   
+	   /**
+	    * f0 -> PrimaryExpression()
+	    * f1 -> "-"
+	    * f2 -> PrimaryExpression()
+	    */
+	   public String visit(MinusExpression n, Integer indentation) {
+		   String v1 = n.f0.accept(this, indentation);
+		   String v2 = n.f2.accept(this,indentation);
+		      
+		   //Get result of v1
+		   String resultReg1 = returnExpressionResultRegister(v1);
+		   String resultReg2 = returnExpressionResultRegister(v2);
+		   String finalResultReg = getTempRegister();
+		   String subtraction = assign(finalResultReg,"Sub(" + resultReg1 + " " + resultReg2 + ")",indentation);
+		   return concatentateInstructions(v1, concatentateInstructions(v2, subtraction));
+	   }
+	   
+	   /**
+	    * f0 -> PrimaryExpression()
+	    * f1 -> "*"
+	    * f2 -> PrimaryExpression()
+	    */
+	   public String visit(TimesExpression n, Integer indentation) {
+		   String v1 = n.f0.accept(this, indentation);
+		   String v2 = n.f2.accept(this,indentation);
+		      
+		   //Get result of v1
+		   String resultReg1 = returnExpressionResultRegister(v1);
+		   String resultReg2 = returnExpressionResultRegister(v2);
+		   String finalResultReg = getTempRegister();
+		   String multiplication = assign(finalResultReg,"MulS(" + resultReg1 + " " + resultReg2 + ")",indentation);
+		   return concatentateInstructions(v1, concatentateInstructions(v2, multiplication));
+	   }
 	   
 	      
 	   /**
@@ -247,7 +456,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	   public String visit(PrimaryExpression n, Integer indentation) {
 		   String ret = n.f0.choice.accept(this, indentation);
 		   
-		   if(n.f0.which == 6) {
+		   if(n.f0.which == 6 || n.f0.which == 7 || n.f0.which == 8)  {
 			   //These expressions will already assign result to a temp reg.
 			   return ret;
 		   }
@@ -349,26 +558,23 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    * f0 -> "!"
 	    * f1 -> Expression()
 	    */
-	/*   public String visit(NotExpression n, Integer indentation) {
-	      R _ret=null;
-	      n.f0.accept(this);
-	      n.f1.accept(this);
-	      return _ret;
+	   public String visit(NotExpression n, Integer indentation) {
+	      String evalExpression = n.f1.accept(this,indentation);
+	      String resultReg = returnExpressionResultRegister(evalExpression);
+	      String finalResultReg = getTempRegister();
+	      String not = assign(finalResultReg,"Sub(1 " + resultReg + ")",indentation);  
+		  return concatentateInstructions(evalExpression,not);
 	   }
-	  */
+	  
 	   
 	   /**
 	    * f0 -> "("
 	    * f1 -> Expression()
 	    * f2 -> ")"
 	    */
-	 /*  public R visit(BracketExpression n) {
-	      R _ret=null;
-	      n.f0.accept(this);
-	      n.f1.accept(this);
-	      n.f2.accept(this);
-	      return _ret;
-	   }*/
+	   public String visit(BracketExpression n, Integer indentation) {
+	      return n.f1.accept(this,indentation);
+	   }
 	   
 	   
 	   //Commonly used strings
@@ -407,5 +613,8 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   return concatentateInstructions(ifString, elseString);
 	   }
 	   
+	   private String gotoLabel(String label,Integer indentation) {
+		   return getIndentation(indentation) + "goto " + ":" + label;
+	   }
 
 }
