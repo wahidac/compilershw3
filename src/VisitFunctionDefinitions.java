@@ -1,15 +1,19 @@
 
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 import visitor.GJNoArguDepthFirst;
+import visitor.Visitor;
 
 public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	HashMap<String, ClassBinding> symbolTable;
 	String currentClass;
+	MethodBinding currentMethodBinding;	
+	ClassBinding currentClassBinding;
 	JumpTable jumpTable;
 	int tempRegisterCounter;
 	int nullCheckCounter;
@@ -125,6 +129,9 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    * f17 -> "}"
 	    */
 	   public String visit(MainClass n, Integer indentation) {
+		  currentClass = SymbolTableVisitor.identifierForIdentifierNode(n.f1);
+		  currentClassBinding = symbolTable.get(currentClass);
+		  currentMethodBinding = currentClassBinding.getMethodBinding("main", symbolTable);
 	      String _ret="func Main()";
 	      //Visit statements.
 	      
@@ -190,7 +197,12 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    * f12 -> "}"
 	    */
 	   public String visit(MethodDeclaration n, Integer indentation) {
+		 
+		   
 		   String methodName = SymbolTableVisitor.identifierForIdentifierNode(n.f2);
+		   currentClassBinding = symbolTable.get(currentClass);
+		   currentMethodBinding = currentClassBinding.getMethodBindings().get(methodName);
+		   
 		   //NOTE: unitialized variables?
 		   assert(!currentClass.isEmpty());
 		   methodName = currentClass + "." + methodName;
@@ -439,6 +451,86 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   String finalResultReg = getTempRegister();
 		   String multiplication = assign(finalResultReg,"MulS(" + resultReg1 + " " + resultReg2 + ")",indentation);
 		   return concatentateInstructions(v1, concatentateInstructions(v2, multiplication));
+	   }
+	   
+	   
+	   /**
+	    * f0 -> PrimaryExpression()
+	    * f1 -> "."
+	    * f2 -> Identifier()
+	    * f3 -> "("
+	    * f4 -> ( ExpressionList() )?
+	    * f5 -> ")"
+	    */
+	  
+	   public String visit(MessageSend n, Integer indentation) {
+		  //NOTE: are parameters copied? check whether any mutation happens
+		   
+		   //Evaluate the primary expression
+		   String functionCall = "";
+		   String primaryExpression = n.f0.accept(this,indentation);
+		   String objectRegister = returnExpressionResultRegister(primaryExpression);
+		   //object should point to the object whose method we're calling. Pass this in as 'this' parameter
+		   functionCall = primaryExpression;
+		   
+		   //Need to figure out the object type. Dig into the primary expression with the TypeCalculator visitor
+		   
+		   //NOTE: look at prim expression on left hand side that's something like a message call. does my typechecker handle that?
+		   TypeCalculator visitor = new TypeCalculator();
+		   visitor.currentClassBinding = currentClassBinding;
+		   visitor.currentMethodBinding = currentMethodBinding;
+		   visitor.currentClass = currentClass;
+		   VarType type = n.f0.accept(visitor,symbolTable);
+		   assert(type.type == VariableType.CLASS);
+		   String callingObject = type.className;
+		   HashMap<String,Integer> methodOffsets = jumpTable.methodIndexInJumpTable.get(callingObject);
+		   
+		  //Evaluate every expression in the expression list, storing results
+		  //in registers
+		  int numArguments = 0;
+		  ArrayList<String> registers = new ArrayList<String>();
+		  String expressionEvaluations = "";
+		  if(n.f4.present()) {
+			  ExpressionList temp = (ExpressionList) n.f4.node;
+			  Expression expr = temp.f0;
+			  //Eval first expression
+			  String exprResult = expr.accept(this,indentation);
+			  String resultReg = returnExpressionResultRegister(exprResult);
+			  registers.add(resultReg); 
+			  expressionEvaluations = exprResult;
+			  Enumeration<Node> e = temp.f1.elements();
+			  while(e.hasMoreElements()) {
+				  exprResult = e.nextElement().accept(this,indentation);
+				  resultReg = returnExpressionResultRegister(exprResult);
+				  registers.add(resultReg);
+				  expressionEvaluations = concatentateInstructions(expressionEvaluations, expressionEvaluations);
+			  }
+		  }
+		  
+		  //Now we have results of all expressions in the registers arraylist. To calculate
+		  //where in the jump table this method is, we need to know what class obj is invoking the fun call
+		  functionCall = concatentateInstructions(functionCall, expressionEvaluations);
+		  String methodName = SymbolTableVisitor.identifierForIdentifierNode(n.f2);
+		  int methodOffsetInJumpTable = methodOffsets.get(methodName);
+		  
+		  String pointerToJumpTable = getTempRegister();
+		  functionCall = concatentateInstructions(functionCall,assign(pointerToJumpTable, accessMemory(objectRegister, 0), indentation));
+		  String pointerToFunctionAddress = getTempRegister();
+		  functionCall = concatentateInstructions(functionCall, assign(pointerToFunctionAddress, accessMemory(pointerToJumpTable, methodOffsetInJumpTable), indentation));
+		  //Call the function w/ this + arguments
+		  String callString = "call " + pointerToFunctionAddress + "(" + objectRegister + ")"; 
+		  String functionResult = assign(getTempRegister(), callString, indentation);
+		  functionCall = concatentateInstructions(functionCall, functionResult);
+		  return functionCall;
+	   }
+
+
+	   /**
+	    * f0 -> ","
+	    * f1 -> Expression()
+	    */
+	   public String visit(ExpressionRest n, Integer indentation) {
+	      return n.f1.accept(this, indentation);
 	   }
 	   
 	      

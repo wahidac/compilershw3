@@ -8,10 +8,13 @@ class Test{
 	Jamba j;
 	
 	j = new Jamba();
+	j = (new Tootsie().returnNewJamba()).returnNewJamba();
+	b = j.yolo();
+	j = new Tootsie();
+	b = j.roko();
 	f = true;
 	g = true;
 	e = f && g;
-	b = (50);
 	c = 3;
 	while(!(b < 20)) {
 		System.out.println(b);
@@ -26,9 +29,11 @@ class Jamba {
 	boolean f2;
 	int f3;
 	
-	public int yolo(int a) {
-		return 3;
+	public int yolo() {
+		
+		return 200;
 	}
+	
 	
 	public int jookie(int a, boolean mojo) {
 		a = 4;
@@ -41,7 +46,11 @@ class Jamba {
 	}
 	
 	public int roko() {
-		return 1;
+		return 100;
+	}
+	
+	public Jamba returnNewJamba() {
+		return new Jamba();
 	}
 	
 	public boolean mugatu() {
@@ -60,7 +69,7 @@ class Mokie extends Jamba {
 	}	
 	
 	public int mufu() {
-		return 1;
+		return 500;
 	}
 	
 	public boolean mufasa() {
@@ -68,7 +77,8 @@ class Mokie extends Jamba {
 	}
 	
 	public int roko() {
-		return 4;
+		Mokie m;
+		return this.mufu();
 	}
 }
 
@@ -82,8 +92,8 @@ class Tootsie extends Mokie {
 		return 4;
 	}
 	
-	public int yolo(int a) {
-		return 4;
+	public int yolo() {
+		return 400;
 	}
 	
 }

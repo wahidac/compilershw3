@@ -51,10 +51,10 @@ public class JumpTable {
 			//Iterate through methods.
 			int i = 0;
 			for(Map.Entry<String, MethodBinding> m:binding.getAllMethods(symbolTable,className).entrySet()) {
-				String methodName = m.getKey();
-				String entry = ":" + methodName;
-				table += "\n  " + entry;
+				String methodName = m.getKey().split("\\.")[1];
 				methodOffsets.put(methodName, 4*i);
+				String entry = ":" + m.getKey();
+				table += "\n  " + entry;
 				i++;
 			}
 			vaporJumpTable += "\n\n" + table;
