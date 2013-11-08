@@ -1,11 +1,5 @@
-const methods_Mokie
-  :Mokie.broko
-
-const methods_Jamba
-  :Jamba.yolo
-  :Jamba.jookie
-
 func Main()
+  t.100 = :Jamba.yolo
   t.0 = HeapAllocZ(16)
   [t.0+0] = :methods_Jamba
   if t.0 goto :null0
@@ -82,3 +76,12 @@ func Mokie.broko(this a)
 
   t.28 = 1
   ret t.28
+
+const methods_Mokie
+  :Mokie.broko
+
+const methods_Jamba
+  :Jamba.yolo
+  :Jamba.jookie
+
+

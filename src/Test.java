@@ -39,13 +39,52 @@ class Jamba {
 			a = a + 10;
 		return a;
 	}
-}
-
-class Mokie {
-	boolean a;
 	
-	public boolean broko(int a) {
+	public int roko() {
+		return 1;
+	}
+	
+	public boolean mugatu() {
 		return true;
 	}
 	
+	
 }
+
+class Mokie extends Jamba {
+	boolean a;
+	boolean b;
+	
+	public boolean broko(int a) {
+		return true;
+	}	
+	
+	public int mufu() {
+		return 1;
+	}
+	
+	public boolean mufasa() {
+		return false;
+	}
+	
+	public int roko() {
+		return 4;
+	}
+}
+
+class Tootsie extends Mokie {
+	
+	public int jookie(int a, boolean mojo) {
+		return a;
+	}
+	
+	public int mufu() {
+		return 4;
+	}
+	
+	public int yolo(int a) {
+		return 4;
+	}
+	
+}
+

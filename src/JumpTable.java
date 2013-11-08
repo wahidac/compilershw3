@@ -50,9 +50,9 @@ public class JumpTable {
 			String table = "const methods_"+className;
 			//Iterate through methods.
 			int i = 0;
-			for(Map.Entry<String, MethodBinding> m:binding.getAllMethods(symbolTable).entrySet()) {
+			for(Map.Entry<String, MethodBinding> m:binding.getAllMethods(symbolTable,className).entrySet()) {
 				String methodName = m.getKey();
-				String entry = ":" + className + "." + methodName;
+				String entry = ":" + methodName;
 				table += "\n  " + entry;
 				methodOffsets.put(methodName, 4*i);
 				i++;

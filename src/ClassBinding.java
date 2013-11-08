@@ -4,19 +4,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ClassBinding {
-	private HashMap<String, VarType> fields;
+	private LinkedHashMap<String, VarType> fields;
 	private LinkedHashMap<String,MethodBinding> methods;
 	//For when this class extends another class, 
 	public String parentClass;
 	//numBytesToRepresent = 4 for method table pointer + 4*numFieldsDeclared + 4*numFieldsInherited.
 	public int numBytesToRepresent;
 	//All fields, including inherited ones
-	private HashMap<String,VarType> allFields;
+	private LinkedHashMap<String,VarType> allFields;
 	//All methods, including inherited ones
-	private HashMap<String,MethodBinding> allMethods;
+	private LinkedHashMap<String,MethodBinding> allMethods;
 	
 	public ClassBinding() {
-		fields = new HashMap<String,VarType>();
+		fields = new LinkedHashMap<String,VarType>();
 		methods = new LinkedHashMap<String,MethodBinding>();
 		parentClass = "";
 	}
@@ -69,13 +69,15 @@ public class ClassBinding {
 		return fields;
 	}
 	
-	//Return a map of fields, taking into consideration method overriding
-	public HashMap<String,VarType> getAllFields(HashMap<String,ClassBinding> symbolTable) {
+	//Return a map of fields, taking into consideration overriding. Order things such
+	//that everything inherited or overridden is returned first. Then tack on the new fields
+	//to the end of the list. 
+	public LinkedHashMap<String,VarType> getAllFields(HashMap<String,ClassBinding> symbolTable) {
 		//Take all local fields and put into the map
 		if(this.allFields != null)
 			return this.allFields;
-		this.allFields = new HashMap<String,VarType>();
-		this.allFields.putAll(this.fields);
+		this.allFields = new LinkedHashMap<String,VarType>();
+		LinkedHashMap<String,VarType> fieldsNotInheritedOrShadowed = new LinkedHashMap<String,VarType>(this.fields);
 		if(!this.parentClass.isEmpty()) {
 			//We inherit fields. Add fields that this class doesn't shadow
 			ClassBinding parentBinding = symbolTable.get(this.parentClass);
@@ -83,35 +85,61 @@ public class ClassBinding {
 			for(Map.Entry<String,VarType> v:parentFields.entrySet()) {
 				String parentField = v.getKey();
 				VarType parentFieldType = v.getValue();
-				if(this.allFields.get(parentField) == null) {
-					//Class doesn't shadow parent field. 
+				VarType currentClassFieldType = this.fields.get(parentField);
+				if(currentClassFieldType != null) {
+					//This class shadows. Use this field, not the parents
+					this.allFields.put(parentField, currentClassFieldType);
+					VarType removedField = fieldsNotInheritedOrShadowed.remove(parentField);
+					assert(removedField != null);
+				} else 
+					//Class doesn't shadow parent field, it inherits it 
 					this.allFields.put(parentField, parentFieldType);
 				}		
 			}
-		}
+		
+		this.allFields.putAll(fieldsNotInheritedOrShadowed);
 		return this.allFields;
 	}
 	
-	//Return a map of fields, taking into consideration method overriding
-	public HashMap<String,MethodBinding> getAllMethods(HashMap<String,ClassBinding> symbolTable) {
+	//Return a map of methods, taking into consideration method overriding
+	//Tack on prefix to the beginning of the method name
+	public HashMap<String,MethodBinding> getAllMethods(HashMap<String,ClassBinding> symbolTable, String prefix) {
 		//Take all local fields and put into the map
 		if(this.allMethods != null)
 			return this.allMethods;
-		this.allMethods = new HashMap<String,MethodBinding>();
-		this.allMethods.putAll(this.methods);
+		this.allMethods = new LinkedHashMap<String,MethodBinding>();
+		LinkedHashMap<String,MethodBinding> methodsNotInheritedOrShadowed = new LinkedHashMap<String,MethodBinding>();
+		
+		//Iterate through and tack on the prefix
+		for(Map.Entry<String, MethodBinding> v:this.methods.entrySet()) {
+					String key = v.getKey();
+					methodsNotInheritedOrShadowed.put(prefix+"."+key,v.getValue());
+		}	
+				
 		if(!this.parentClass.isEmpty()) {
 			//We inherit methods. Add methods that this class doesn't override
 			ClassBinding parentBinding = symbolTable.get(this.parentClass);
-			HashMap<String,MethodBinding> parentMethods = parentBinding.getAllMethods(symbolTable);
+			HashMap<String,MethodBinding> parentMethods = parentBinding.getAllMethods(symbolTable,parentClass);
 			for(Map.Entry<String,MethodBinding> v:parentMethods.entrySet()) {
 				String parentMethod = v.getKey();
+				//Strip off the prefix
+				String methodWithoutPrefix = parentMethod.split("\\.")[1];
 				MethodBinding parentMethodBinding = v.getValue();
-				if(this.allMethods.get(parentMethod) == null) {
-					//Class doesn't override parent field. 
+				MethodBinding currentMethodBinding = this.methods.get(methodWithoutPrefix);
+				if(currentMethodBinding != null) {
+					//We have overridden this method
+					parentMethod = prefix + "." + methodWithoutPrefix;
+					this.allMethods.put(parentMethod, currentMethodBinding);
+					MethodBinding removedBinding = methodsNotInheritedOrShadowed.remove(parentMethod);
+					assert(removedBinding != null);
+				} else {
+					//Inherit this from the parent
 					this.allMethods.put(parentMethod, parentMethodBinding);
-				}		
+				}	
 			}
-		}
+		}	
+		
+		this.allMethods.putAll(methodsNotInheritedOrShadowed);
 		return this.allMethods;
 	}
 	
