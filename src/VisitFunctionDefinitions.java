@@ -503,7 +503,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 				  exprResult = e.nextElement().accept(this,indentation);
 				  resultReg = returnExpressionResultRegister(exprResult);
 				  registers.add(resultReg);
-				  expressionEvaluations = concatentateInstructions(expressionEvaluations, expressionEvaluations);
+				  expressionEvaluations = concatentateInstructions(expressionEvaluations, exprResult);
 			  }
 		  }
 		  
@@ -518,7 +518,11 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		  String pointerToFunctionAddress = getTempRegister();
 		  functionCall = concatentateInstructions(functionCall, assign(pointerToFunctionAddress, accessMemory(pointerToJumpTable, methodOffsetInJumpTable), indentation));
 		  //Call the function w/ this + arguments
-		  String callString = "call " + pointerToFunctionAddress + "(" + objectRegister + ")"; 
+		  String arguments = "";
+		  for(String reg:registers) {
+			  arguments += " " + reg;
+		  }
+		  String callString = "call " + pointerToFunctionAddress + "(" + objectRegister + arguments + ")"; 
 		  String functionResult = assign(getTempRegister(), callString, indentation);
 		  functionCall = concatentateInstructions(functionCall, functionResult);
 		  return functionCall;

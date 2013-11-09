@@ -7,11 +7,14 @@ class Test{
 	boolean e;
 	Jamba j;
 	
+	g = true && true;
+	c = 540;
 	j = new Jamba();
 	j = (new Tootsie().returnNewJamba()).returnNewJamba();
-	b = j.yolo();
 	j = new Tootsie();
-	b = j.roko();
+	b = j.yolo(c,g);
+	j = new Tootsie();
+	//b = j.roko();
 	f = true;
 	g = true;
 	e = f && g;
@@ -29,20 +32,23 @@ class Jamba {
 	boolean f2;
 	int f3;
 	
-	public int yolo() {
-		
-		return 200;
+	public int yolo(int c, boolean b) {
+		int ret;
+		if(b)
+			ret = this.jookie(c, !b);
+		else
+			ret = 100;
+		return ret;
 	}
 	
 	
-	public int jookie(int a, boolean mojo) {
-		a = 4;
-		mojo = false;
-		if(mojo)
-			a = a + 2;
+	public int jookie(int a, boolean b) {
+		int ret;
+		if(b)
+			ret = 999;
 		else
-			a = a + 10;
-		return a;
+			ret = a;
+		return ret;
 	}
 	
 	public int roko() {
@@ -92,7 +98,7 @@ class Tootsie extends Mokie {
 		return 4;
 	}
 	
-	public int yolo() {
+	public int yolo(int a, boolean b) {
 		return 400;
 	}
 	
