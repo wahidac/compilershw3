@@ -69,35 +69,28 @@ public class ClassBinding {
 		return fields;
 	}
 	
-	//Return a map of fields, taking into consideration overriding. Order things such
-	//that everything inherited or overridden is returned first. Then tack on the new fields
-	//to the end of the list. 
-	public LinkedHashMap<String,VarType> getAllFields(HashMap<String,ClassBinding> symbolTable) {
+	//Return a map of fields, taking into consideration shadowing.
+	public LinkedHashMap<String,VarType> getAllFields(HashMap<String,ClassBinding> symbolTable, String prefix) {
 		//Take all local fields and put into the map
 		if(this.allFields != null)
 			return this.allFields;
 		this.allFields = new LinkedHashMap<String,VarType>();
-		LinkedHashMap<String,VarType> fieldsNotInheritedOrShadowed = new LinkedHashMap<String,VarType>(this.fields);
-		if(!this.parentClass.isEmpty()) {
-			//We inherit fields. Add fields that this class doesn't shadow
-			ClassBinding parentBinding = symbolTable.get(this.parentClass);
-			HashMap<String,VarType> parentFields = parentBinding.getAllFields(symbolTable);
-			for(Map.Entry<String,VarType> v:parentFields.entrySet()) {
-				String parentField = v.getKey();
-				VarType parentFieldType = v.getValue();
-				VarType currentClassFieldType = this.fields.get(parentField);
-				if(currentClassFieldType != null) {
-					//This class shadows. Use this field, not the parents
-					this.allFields.put(parentField, currentClassFieldType);
-					VarType removedField = fieldsNotInheritedOrShadowed.remove(parentField);
-					assert(removedField != null);
-				} else 
-					//Class doesn't shadow parent field, it inherits it 
-					this.allFields.put(parentField, parentFieldType);
-				}		
-			}
+		LinkedHashMap<String,VarType> fieldsDeclaredByClass = new LinkedHashMap<String,VarType>();
 		
-		this.allFields.putAll(fieldsNotInheritedOrShadowed);
+		//Iterate through and tack on the prefix
+		for(Map.Entry<String, VarType> v:this.fields.entrySet()) {
+					String key = v.getKey();
+					fieldsDeclaredByClass.put(prefix+"."+key,v.getValue());
+		}	
+		
+		if(!this.parentClass.isEmpty()) {
+			//We inherit fields. 
+			ClassBinding parentBinding = symbolTable.get(this.parentClass);
+			HashMap<String,VarType> parentFields = parentBinding.getAllFields(symbolTable,parentClass);
+			this.allFields.putAll(parentFields);
+		}
+		
+		this.allFields.putAll(fieldsDeclaredByClass);
 		return this.allFields;
 	}
 	

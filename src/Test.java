@@ -7,7 +7,7 @@ class Test{
 	boolean e;
 	Jamba j;
 	
-	g = true && true;
+	/*g = true && true;
 	c = 540;
 	j = new Jamba();
 	j = (new Tootsie().returnNewJamba()).returnNewJamba();
@@ -22,8 +22,13 @@ class Test{
 	while(!(b < 20)) {
 		System.out.println(b);
 		b = b - c;
-	}
+	}*/
+	Snookie s;
+	s = new Snookie();
+	b = s.snookieTest();
+	
     }
+	
 }
 
 
@@ -69,6 +74,8 @@ class Jamba {
 class Mokie extends Jamba {
 	boolean a;
 	boolean b;
+	int f2;
+
 	
 	public boolean broko(int a) {
 		return true;
@@ -79,6 +86,7 @@ class Mokie extends Jamba {
 	}
 	
 	public boolean mufasa() {
+		f2 = 11111;
 		return false;
 	}
 	
@@ -86,21 +94,52 @@ class Mokie extends Jamba {
 		Mokie m;
 		return this.mufu();
 	}
+	
+	public int mojoJojo(int a) {
+		return f2;
+	}
 }
 
 class Tootsie extends Mokie {
+	Jamba f2;
+	int b;
 	
 	public int jookie(int a, boolean mojo) {
 		return a;
 	}
 	
 	public int mufu() {
-		return 4;
+		return b;
 	}
 	
 	public int yolo(int a, boolean b) {
 		return 400;
 	}
 	
+}
+
+class Snookie extends Tootsie {
+	int f2;
+	public int snookieTest() {
+		int temp;
+		boolean bo;
+		int f2;
+		
+		bo = this.mufasa();
+		temp = this.mokuMoku();
+		f2 = 12345;
+		System.out.println(f2);
+		System.out.println(this.mojoJojo(f2));
+		System.out.println(this.mokuMoku());
+		b = 23;
+		System.out.println(this.mufu());
+		
+		return f2;
+	}
+	
+	public int mokuMoku() {
+		f2 = 989898;
+		return f2;
+	}
 }
 

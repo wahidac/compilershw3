@@ -14,14 +14,17 @@ public class JumpTable {
 	private HashMap<String,ClassBinding> symbolTable;
 	//Need to track where in jumptable a method is
 	public HashMap<String,HashMap<String,Integer>> methodIndexInJumpTable;
+	public HashMap<String, HashMap<String,Integer>> fieldOffsets;
 	String vaporJumpTable; //String representation of the table
 	
 	public JumpTable(HashMap<String,ClassBinding> symbolTable) {
 		this.symbolTable = symbolTable;
 		this.methodIndexInJumpTable = new HashMap<String,HashMap<String,Integer>>();
+		this.fieldOffsets = new HashMap<String, HashMap<String,Integer>>();
 		vaporJumpTable = "";
 		populateBindingsWithSizes();
 		createJumpTable();
+		createFieldMappings();
 	}
 	
 	private void populateBindingsWithSizes() {
@@ -30,7 +33,7 @@ public class JumpTable {
 		for(Map.Entry<String, ClassBinding> c:symbolTable.entrySet()) {
 			String className = c.getKey();
 			ClassBinding binding = c.getValue();
-			int numFields = binding.getAllFields(this.symbolTable).size();
+			int numFields = binding.getAllFields(this.symbolTable,className).size();
 			binding.numBytesToRepresent = 4 + 4*numFields;
 		}
 	}
@@ -58,6 +61,35 @@ public class JumpTable {
 				i++;
 			}
 			vaporJumpTable += "\n\n" + table;
+		}
+	}
+	
+	//Create mapping of field names to offsets
+	public void createFieldMappings() {
+		for(Map.Entry<String, ClassBinding> c:symbolTable.entrySet()) {
+			String className = c.getKey();
+			ClassBinding binding = c.getValue();
+		
+			HashMap<String,Integer> fieldOffset = new HashMap<String,Integer>();
+			fieldOffsets.put(className, fieldOffset);
+			//Iterate through fields. put them all in field offsets, overriding offset locations
+			//of fields that are shadowed
+			int i = 0;
+			System.out.println("Num fields:" + binding.getAllFields(symbolTable, className).size());
+			System.out.println("Class " + className);
+			for(Map.Entry<String, VarType> f:binding.getAllFields(symbolTable,className).entrySet()) {
+				String fieldName = f.getKey().split("\\.")[1];
+				System.out.println(f.getKey() + ":" +  4*i + " VarType: " + f.getValue().type);
+				fieldOffset.put(fieldName, 4+4*i);
+				i++;
+			}
+			System.out.println("\nOffset Table:");
+			for(Map.Entry<String, Integer> f:fieldOffset.entrySet()) {
+				System.out.println(f.getKey() + ":" +  f.getValue());
+			}
+			
+			
+			System.out.println("\n");
 		}
 	}
 	

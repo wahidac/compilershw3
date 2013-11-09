@@ -282,7 +282,10 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	   public String visit(AssignmentStatement n, Integer indentation) {
 	      String expressionResult = n.f2.accept(this, indentation);
 	      String registerWithResult = returnExpressionResultRegister(expressionResult);
-	      String assignmentStr = SymbolTableVisitor.identifierForIdentifierNode(n.f0) + " = " + registerWithResult;
+	      
+	      String leftHandSide = returnCorrectIdentifier(n.f0);
+	       
+	      String assignmentStr = leftHandSide + " = " + registerWithResult;
 	      String ret = expressionResult + "\n" + getIndentation(indentation) + assignmentStr;
 	      return ret;
 	   }
@@ -600,8 +603,9 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    * f0 -> <IDENTIFIER>
 	    */
 	   public String visit(Identifier n, Integer indentation) {
-	      return SymbolTableVisitor.identifierForIdentifierNode(n);
+		   return returnCorrectIdentifier(n);   
 	   }
+	   
 	   
 	   /**
 	    * f0 -> "this"
@@ -670,6 +674,35 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    */
 	   public String visit(BracketExpression n, Integer indentation) {
 	      return n.f1.accept(this,indentation);
+	   }
+	   
+	   //Return correct identifier taking class fields into consideration
+	   String returnCorrectIdentifier(Identifier n) {
+		   //An identifier can refer to a local var/parameter or
+		   //a field. 
+		   
+		   //Is this a local var or param?
+		   VarType v = null;
+		   String id = SymbolTableVisitor.identifierForIdentifierNode(n);
+		   v = currentMethodBinding.locals.get(id);
+		   if(v == null) {
+			   v = currentMethodBinding.parameters.get(id);		
+		   }
+		   
+		   if(v != null) {
+			   //Variable is a local variable or a parameter. Just return the var name.
+			   //It will be in scope either through function arguments or local var declarations
+			   return id;
+		   } else {
+			   //Variable is not local to function. It must be a field. Get the correct offset
+			   //jumpTable. 
+			   HashMap<String,Integer> offsets = jumpTable.fieldOffsets.get(currentClass);
+			   int offset = offsets.get(id);
+			   
+			   //Use the "this" pointer to refer to the current object
+			   String fieldAccess = accessMemory("this", offset);
+			   return fieldAccess;
+		   }	
 	   }
 	   
 	   

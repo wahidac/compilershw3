@@ -1,5 +1,3 @@
-
-
 const methods_Tootsie
   :Tootsie.yolo
   :Tootsie.jookie
@@ -9,6 +7,7 @@ const methods_Tootsie
   :Mokie.broko
   :Tootsie.mufu
   :Mokie.mufasa
+  :Mokie.mojoJojo
 
 const methods_Mokie
   :Jamba.yolo
@@ -19,6 +18,20 @@ const methods_Mokie
   :Mokie.broko
   :Mokie.mufu
   :Mokie.mufasa
+  :Mokie.mojoJojo
+
+const methods_Snookie
+  :Tootsie.yolo
+  :Tootsie.jookie
+  :Mokie.roko
+  :Jamba.returnNewJamba
+  :Jamba.mugatu
+  :Mokie.broko
+  :Tootsie.mufu
+  :Mokie.mufasa
+  :Mokie.mojoJojo
+  :Snookie.snookieTest
+  :Snookie.mokuMoku
 
 const methods_Jamba
   :Jamba.yolo
@@ -28,178 +41,154 @@ const methods_Jamba
   :Jamba.mugatu
 
 func Main()
-  t.0 = 1
-  t.1 = 1
-  if0 t.0 goto :else0
-    t.2 = t.1
-    goto :else_end0
-  else0:
-    t.2 = 0
-  else_end0:
-  t.2 = t.2
-  g = t.2
-  t.3 = 540
-  c = t.3
-  t.4 = HeapAllocZ(16)
-  [t.4+0] = :methods_Jamba
-  if t.4 goto :null0
+  t.0 = HeapAllocZ(40)
+  [t.0+0] = :methods_Snookie
+  if t.0 goto :null0
     Error("null pointer")
   null0:
-  t.5 = t.4
-  j = t.5
-  t.6 = HeapAllocZ(24)
-  [t.6+0] = :methods_Tootsie
-  if t.6 goto :null1
-    Error("null pointer")
-  null1:
-  t.7 = t.6
+  t.1 = t.0
+  s = t.1
+  t.2 = s
 
-  t.8 = [t.7+0]
-  t.9 = [t.8+12]
-  t.10 = call t.9(t.7)
-
-  t.11 = [t.10+0]
-  t.12 = [t.11+12]
-  t.13 = call t.12(t.10)
-  j = t.13
-  t.14 = HeapAllocZ(24)
-  [t.14+0] = :methods_Tootsie
-  if t.14 goto :null2
-    Error("null pointer")
-  null2:
-  t.15 = t.14
-  j = t.15
-  t.16 = j
-  t.17 = c
-  t.18 = g
-  t.19 = [t.16+0]
-  t.20 = [t.19+0]
-  t.21 = call t.20(t.16 t.17 t.18)
-  b = t.21
-  t.22 = HeapAllocZ(24)
-  [t.22+0] = :methods_Tootsie
-  if t.22 goto :null3
-    Error("null pointer")
-  null3:
-  t.23 = t.22
-  j = t.23
-  t.24 = 1
-  f = t.24
-  t.25 = 1
-  g = t.25
-  t.26 = f
-  t.27 = g
-  if0 t.26 goto :else1
-    t.28 = t.27
-    goto :else_end1
-  else1:
-    t.28 = 0
-  else_end1:
-  t.28 = t.28
-  e = t.28
-  t.29 = 3
-  c = t.29
-  while0_top:
-    t.30 = b
-    t.31 = 20
-    t.32 = LtS(t.30 t.31)
-    t.33 = Sub(1 t.32)
-    if0 t.33 goto :else2
-
-      t.34 = b
-      PrintIntS(t.34)
-      t.35 = b
-      t.36 = c
-      t.37 = Sub(t.35 t.36)
-      b = t.37
-      goto :else_end2
-    else2:
-      goto :while0_end
-    else_end2:
-    goto :while0_top
-  while0_end:
+  t.3 = [t.2+0]
+  t.4 = [t.3+36]
+  t.5 = call t.4(t.2)
+  b = t.5
   ret
 
 func Jamba.yolo(this c b)
 
-  t.38 = b
-  if0 t.38 goto :else3
-    t.39 = this
-    t.40 = c
-    t.41 = b
-    t.42 = Sub(1 t.41)
-    t.43 = [t.39+0]
-    t.44 = [t.43+4]
-    t.45 = call t.44(t.39 t.40 t.42)
-    ret = t.45
-    goto :else_end3
-  else3:
-    t.46 = 100
-    ret = t.46
-  else_end3:
-  t.47 = ret
-  ret t.47
+  t.6 = b
+  if0 t.6 goto :else0
+    t.7 = this
+    t.8 = c
+    t.9 = b
+    t.10 = Sub(1 t.9)
+    t.11 = [t.7+0]
+    t.12 = [t.11+4]
+    t.13 = call t.12(t.7 t.8 t.10)
+    ret = t.13
+    goto :else_end0
+  else0:
+    t.14 = 100
+    ret = t.14
+  else_end0:
+  t.15 = ret
+  ret t.15
 func Jamba.jookie(this a b)
 
-  t.48 = b
-  if0 t.48 goto :else4
-    t.49 = 999
-    ret = t.49
-    goto :else_end4
-  else4:
-    t.50 = a
-    ret = t.50
-  else_end4:
-  t.51 = ret
-  ret t.51
+  t.16 = b
+  if0 t.16 goto :else1
+    t.17 = 999
+    ret = t.17
+    goto :else_end1
+  else1:
+    t.18 = a
+    ret = t.18
+  else_end1:
+  t.19 = ret
+  ret t.19
 func Jamba.roko(this )
 
-  t.52 = 100
-  ret t.52
+  t.20 = 100
+  ret t.20
 func Jamba.returnNewJamba(this )
 
-  t.53 = HeapAllocZ(16)
-  [t.53+0] = :methods_Jamba
-  if t.53 goto :null4
+  t.21 = HeapAllocZ(16)
+  [t.21+0] = :methods_Jamba
+  if t.21 goto :null1
     Error("null pointer")
-  null4:
-  t.54 = t.53
-  ret t.54
+  null1:
+  t.22 = t.21
+  ret t.22
 func Jamba.mugatu(this )
 
-  t.55 = 1
-  ret t.55
+  t.23 = 1
+  ret t.23
 
 func Mokie.broko(this a)
 
-  t.56 = 1
-  ret t.56
+  t.24 = 1
+  ret t.24
 func Mokie.mufu(this )
 
-  t.57 = 500
-  ret t.57
+  t.25 = 500
+  ret t.25
 func Mokie.mufasa(this )
 
-  t.58 = 0
-  ret t.58
+  t.26 = 11111
+  [this+24] = t.26
+  t.27 = 0
+  ret t.27
 func Mokie.roko(this )
 
-  t.59 = this
+  t.28 = this
 
-  t.60 = [t.59+0]
-  t.61 = [t.60+24]
-  t.62 = call t.61(t.59)
-  ret t.62
+  t.29 = [t.28+0]
+  t.30 = [t.29+24]
+  t.31 = call t.30(t.28)
+  ret t.31
+func Mokie.mojoJojo(this a)
+
+  t.32 = [this+24]
+  ret t.32
 
 func Tootsie.jookie(this a mojo)
 
-  t.63 = a
-  ret t.63
+  t.33 = a
+  ret t.33
 func Tootsie.mufu(this )
 
-  t.64 = 4
-  ret t.64
+  t.34 = [this+32]
+  ret t.34
 func Tootsie.yolo(this a b)
 
-  t.65 = 400
-  ret t.65
+  t.35 = 400
+  ret t.35
+
+func Snookie.snookieTest(this )
+
+  t.36 = this
+
+  t.37 = [t.36+0]
+  t.38 = [t.37+28]
+  t.39 = call t.38(t.36)
+  bo = t.39
+  t.40 = this
+
+  t.41 = [t.40+0]
+  t.42 = [t.41+40]
+  t.43 = call t.42(t.40)
+  temp = t.43
+  t.44 = 12345
+  f2 = t.44
+  t.45 = f2
+  PrintIntS(t.45)
+  t.46 = this
+  t.47 = f2
+  t.48 = [t.46+0]
+  t.49 = [t.48+32]
+  t.50 = call t.49(t.46 t.47)
+  PrintIntS(t.50)
+  t.51 = this
+
+  t.52 = [t.51+0]
+  t.53 = [t.52+40]
+  t.54 = call t.53(t.51)
+  PrintIntS(t.54)
+  t.55 = 23
+  [this+32] = t.55
+  t.56 = this
+
+  t.57 = [t.56+0]
+  t.58 = [t.57+24]
+  t.59 = call t.58(t.56)
+  PrintIntS(t.59)
+  t.60 = f2
+  ret t.60
+func Snookie.mokuMoku(this )
+
+  t.61 = 989898
+  [this+36] = t.61
+  t.62 = [this+36]
+  ret t.62
