@@ -91,7 +91,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	      return _ret;
 	   }
 
-	   public String visit(NodeToken n) {  System.out.println("At Node Token!"); return "";  }
+	   //public String visit(NodeToken n) {  System.out.println("At Node Token!"); return "";  }
 	
 	//
 	   // User-generated visitor methods below
@@ -556,9 +556,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    * f5 -> ")"
 	    */
 	  
-	   public String visit(MessageSend n, Integer indentation) {
-		  //NOTE: are parameters copied? check whether any mutation happens
-		   
+	   public String visit(MessageSend n, Integer indentation) {		   
 		   //Evaluate the primary expression
 		   String functionCall = "";
 		   String primaryExpression = n.f0.accept(this,indentation);
@@ -568,7 +566,6 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   
 		   //Need to figure out the object type. Dig into the primary expression with the TypeCalculator visitor
 		   
-		   //NOTE: look at prim expression on left hand side that's something like a message call. does my typechecker handle that?
 		   TypeCalculator visitor = new TypeCalculator();
 		   visitor.currentClassBinding = currentClassBinding;
 		   visitor.currentMethodBinding = currentMethodBinding;
@@ -700,7 +697,6 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    * f4 -> "]"
 	    */
 	   public String visit(ArrayAllocationExpression n, Integer indentation) {
-		   //NOTE:make sure indentation parameter in all declarations
 	      String evalExpression = n.f3.accept(this,indentation);
 	      String evalResult = returnExpressionResultRegister(evalExpression);
 	      String alloc = "call :AllocArray(" + evalResult + ")";
@@ -727,7 +723,6 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		  allocString = concatentateInstructions(allocString,assign(accessMemory(temporaryReg, 0),jumpTableLabel,indentation));
 		  allocString = concatentateInstructions(allocString, checkForNull(temporaryReg, indentation));
 		  allocString = concatentateInstructions(allocString, assign(getTempRegister(), temporaryReg, indentation));
-		  //NOTE: need to consider case in which main class is allocated?
 	      return allocString;
 	   }
 	   
@@ -753,6 +748,9 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	   public String visit(BracketExpression n, Integer indentation) {
 	      return n.f1.accept(this,indentation);
 	   }
+	   
+	   
+	   //Begin helper functions
 	   
 	   //Return correct identifier taking class fields into consideration
 	   String returnCorrectIdentifier(Identifier n) {
