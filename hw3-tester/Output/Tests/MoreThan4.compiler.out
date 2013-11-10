@@ -1,0 +1,74 @@
+
+
+const methods_MT4
+  :MT4.Start
+  :MT4.Change
+
+func Main()
+  t.0 = HeapAllocZ(4)
+  [t.0+0] = :methods_MT4
+  if t.0 goto :null0
+    Error("null pointer")
+  null0:
+  t.1 = t.0
+  t.2 = 1
+  t.3 = 2
+  t.4 = 3
+  t.5 = 4
+  t.6 = 5
+  t.7 = 6
+  t.8 = [t.1+0]
+  t.9 = [t.8+0]
+  t.10 = call t.9(t.1 t.2 t.3 t.4 t.5 t.6 t.7)
+  PrintIntS(t.10)
+  ret
+
+func MT4.Start(this p1 p2 p3 p4 p5 p6)
+
+  t.0 = p1
+  PrintIntS(t.0)
+  t.1 = p2
+  PrintIntS(t.1)
+  t.2 = p3
+  PrintIntS(t.2)
+  t.3 = p4
+  PrintIntS(t.3)
+  t.4 = p5
+  PrintIntS(t.4)
+  t.5 = p6
+  PrintIntS(t.5)
+  t.6 = this
+  t.7 = p6
+  t.8 = p5
+  t.9 = p4
+  t.10 = p3
+  t.11 = p2
+  t.12 = p1
+  t.13 = [t.6+0]
+  t.14 = [t.13+4]
+  t.15 = call t.14(t.6 t.7 t.8 t.9 t.10 t.11 t.12)
+  aux = t.15
+  t.16 = aux
+  ret t.16
+func MT4.Change(this p1 p2 p3 p4 p5 p6)
+
+  t.0 = p1
+  PrintIntS(t.0)
+  t.1 = p2
+  PrintIntS(t.1)
+  t.2 = p3
+  PrintIntS(t.2)
+  t.3 = p4
+  PrintIntS(t.3)
+  t.4 = p5
+  PrintIntS(t.4)
+  t.5 = p6
+  PrintIntS(t.5)
+  t.6 = 0
+  ret t.6
+func AllocArray(size)
+  bytes = MulS(size 4)
+  bytes = Add(bytes 4)
+  v = HeapAllocZ(bytes)
+  [v] = size
+  ret v

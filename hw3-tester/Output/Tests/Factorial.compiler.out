@@ -1,0 +1,48 @@
+
+
+const methods_Fac
+  :Fac.ComputeFac
+
+func Main()
+  t.0 = HeapAllocZ(4)
+  [t.0+0] = :methods_Fac
+  if t.0 goto :null0
+    Error("null pointer")
+  null0:
+  t.1 = t.0
+  t.2 = 10
+  t.3 = [t.1+0]
+  t.4 = [t.3+0]
+  t.5 = call t.4(t.1 t.2)
+  PrintIntS(t.5)
+  ret
+
+func Fac.ComputeFac(this num)
+
+  t.0 = num
+  t.1 = 1
+  t.2 = LtS(t.0 t.1)
+  if0 t.2 goto :else0
+    t.3 = 1
+    num_aux = t.3
+    goto :else_end0
+  else0:
+    t.4 = num
+    t.5 = this
+    t.6 = num
+    t.7 = 1
+    t.8 = Sub(t.6 t.7)
+    t.9 = [t.5+0]
+    t.10 = [t.9+0]
+    t.11 = call t.10(t.5 t.8)
+    t.12 = MulS(t.4 t.11)
+    num_aux = t.12
+  else_end0:
+  t.13 = num_aux
+  ret t.13
+func AllocArray(size)
+  bytes = MulS(size 4)
+  bytes = Add(bytes 4)
+  v = HeapAllocZ(bytes)
+  [v] = size
+  ret v

@@ -1,0 +1,14 @@
+
+
+func Main()
+  t.0 = 12
+  t.1 = 21
+  t.2 = Add(t.0 t.1)
+  PrintIntS(t.2)
+  ret
+func AllocArray(size)
+  bytes = MulS(size 4)
+  bytes = Add(bytes 4)
+  v = HeapAllocZ(bytes)
+  [v] = size
+  ret v
