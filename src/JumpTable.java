@@ -75,21 +75,21 @@ public class JumpTable {
 			//Iterate through fields. put them all in field offsets, overriding offset locations
 			//of fields that are shadowed
 			int i = 0;
-			System.out.println("Num fields:" + binding.getAllFields(symbolTable, className).size());
-			System.out.println("Class " + className);
+			//System.out.println("Num fields:" + binding.getAllFields(symbolTable, className).size());
+			//System.out.println("Class " + className);
 			for(Map.Entry<String, VarType> f:binding.getAllFields(symbolTable,className).entrySet()) {
 				String fieldName = f.getKey().split("\\.")[1];
-				System.out.println(f.getKey() + ":" +  4*i + " VarType: " + f.getValue().type);
+				//System.out.println(f.getKey() + ":" +  4*i + " VarType: " + f.getValue().type);
 				fieldOffset.put(fieldName, 4+4*i);
 				i++;
 			}
-			System.out.println("\nOffset Table:");
-			for(Map.Entry<String, Integer> f:fieldOffset.entrySet()) {
-				System.out.println(f.getKey() + ":" +  f.getValue());
-			}
+			//System.out.println("\nOffset Table:");
+			//for(Map.Entry<String, Integer> f:fieldOffset.entrySet()) {
+				//System.out.println(f.getKey() + ":" +  f.getValue());
+			//}
 			
 			
-			System.out.println("\n");
+			//System.out.println("\n");
 		}
 	}
 	

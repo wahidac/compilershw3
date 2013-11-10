@@ -17,6 +17,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	JumpTable jumpTable;
 	int tempRegisterCounter;
 	int nullCheckCounter;
+	int outOfBoundsCounter;
 	int ifCounter;
 	int whileCounter;
 	String indentationSpacing;
@@ -105,6 +106,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	      String _ret="";
 	      _ret = n.f0.accept(this,indentation);
 	      _ret += n.f1.accept(this,indentation);
+	      _ret = concatentateInstructions(_ret, allocArrayFunction());
 	      return jumpTable.vaporJumpTable + "\n\n"+ _ret;
 	   }
 	   
@@ -175,7 +177,6 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    */
 	   public String visit(ClassExtendsDeclaration n, Integer indentation) {
 		   //Set what class we're in
-		   //NOTE: need way to copy the extended method declarations
 		   currentClass = SymbolTableVisitor.identifierForIdentifierNode(n.f1);
 	       //NOTE: if uninitialized vars allowed, where do we initialize class fields?
 		   return n.f6.accept(this,indentation);
@@ -203,7 +204,7 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   currentClassBinding = symbolTable.get(currentClass);
 		   currentMethodBinding = currentClassBinding.getMethodBindings().get(methodName);
 		   
-		   //NOTE: unitialized variables?
+		   //NOTE: uninitialized variables?
 		   assert(!currentClass.isEmpty());
 		   methodName = currentClass + "." + methodName;
 		   String functionArguments = n.f4.accept(this,indentation);
@@ -290,6 +291,47 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	      return ret;
 	   }
 	   
+	   /**
+	    * f0 -> Identifier()
+	    * f1 -> "["
+	    * f2 -> Expression()
+	    * f3 -> "]"
+	    * f4 -> "="
+	    * f5 -> Expression()
+	    * f6 -> ";"
+	    */
+	   public String visit(ArrayAssignmentStatement n, Integer indentation) {
+	      String expr1Eval = n.f2.accept(this,indentation);
+	      String expr2Eval = n.f5.accept(this,indentation);
+	      
+	      String expr1Res= returnExpressionResultRegister(expr1Eval);
+	      String expr2Res = returnExpressionResultRegister(expr2Eval);
+	      
+	      //Get a pointer to the array
+	      String getArrayPointer = assign(getTempRegister(),returnCorrectIdentifier(n.f0),indentation);
+	      String arrayPointer = returnExpressionResultRegister(getArrayPointer);
+	      
+	      //Do an out of bounds check
+	      String length = assign(getTempRegister(),accessMemory(arrayPointer, 0),indentation);
+	      String lengthReg = returnExpressionResultRegister(length);
+	      length = concatentateInstructions(length,assign(lengthReg,"LtS(" + expr1Res + " " + lengthReg + ")",indentation));
+	      
+	      String outOfBoundsCheck = checkForOutOfBounds(lengthReg,indentation);
+	      outOfBoundsCheck = concatentateInstructions(length, outOfBoundsCheck);
+	      //Adjust array pointer to point to correct item
+	      String adjustOffset = assign(expr1Res,"MulS(" + expr1Res + " 4)",indentation);
+	      adjustOffset = concatentateInstructions(adjustOffset, assign(arrayPointer,"Add(" + arrayPointer + " " + expr1Res + ")",indentation));
+		  String access = assign(accessMemory(arrayPointer,4),expr2Res,indentation); 
+	      String lookupString = concatentateInstructions(expr1Eval, expr2Eval);
+	      lookupString = concatentateInstructions(lookupString, getArrayPointer);
+	      lookupString = concatentateInstructions(lookupString, outOfBoundsCheck);
+	      lookupString = concatentateInstructions(lookupString, adjustOffset);
+	      lookupString = concatentateInstructions(lookupString, access);
+
+	      return lookupString;
+	   }
+	   
+	  
 	   /**
 	    * f0 -> "if"
 	    * f1 -> "("
@@ -456,6 +498,54 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   return concatentateInstructions(v1, concatentateInstructions(v2, multiplication));
 	   }
 	   
+	   /**
+	    * f0 -> PrimaryExpression()
+	    * f1 -> "["
+	    * f2 -> PrimaryExpression()
+	    * f3 -> "]"
+	    */
+	   public String visit(ArrayLookup n, Integer indentation) {
+	      String expr1 = n.f0.accept(this,indentation);
+	      String expr2 = n.f2.accept(this,indentation);
+	      String expr1Res = returnExpressionResultRegister(expr1);
+	      String expr2Res = returnExpressionResultRegister(expr2);
+	      
+	      
+	      
+	      //Do an out of bounds check
+	      String length = assign(getTempRegister(), accessMemory(expr1Res, 0),indentation);
+	      String lengthReg = returnExpressionResultRegister(length);
+	      
+	      //Check whether expr2Res is out of bounds by comparing
+	      //w/ size of array
+	      length = concatentateInstructions(length,assign(lengthReg,"LtS(" + expr2Res + " " + lengthReg + ")",indentation));
+	      
+	      String outOfBoundsCheck = checkForOutOfBounds(lengthReg,indentation);
+	      outOfBoundsCheck = concatentateInstructions(length, outOfBoundsCheck);
+	      //Access the element
+	      String adjustOffset = assign(expr2Res,"MulS(" + expr2Res + " 4)",indentation);
+	      //Add offset to expr1 reg to increment the pointer
+	      adjustOffset = concatentateInstructions(adjustOffset, assign(expr1Res,"Add(" + expr1Res + " " + expr2Res + ")",indentation));
+		  String access = assign(getTempRegister(),accessMemory(expr1Res,4),indentation); //4 past what expr1Res points to because first 4 bytes hold the size of the array
+	      String lookupString = concatentateInstructions(expr1, expr2);
+	      lookupString = concatentateInstructions(lookupString, outOfBoundsCheck);
+	      lookupString = concatentateInstructions(lookupString, adjustOffset);
+	      lookupString = concatentateInstructions(lookupString, access);
+	      return lookupString;
+	   }
+	   
+	   /**
+	    * f0 -> PrimaryExpression()
+	    * f1 -> "."
+	    * f2 -> "length"
+	    */
+	   public String visit(ArrayLength n, Integer indentation) {
+		  String exprEval = n.f0.accept(this,indentation);
+		  String exprRes = returnExpressionResultRegister(exprEval);
+		  String lengthString = assign(getTempRegister(), accessMemory(exprRes, 0), indentation);
+		  return concatentateInstructions(exprEval, lengthString);
+	   }
+	   
 	   
 	   /**
 	    * f0 -> PrimaryExpression()
@@ -555,28 +645,16 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	   public String visit(PrimaryExpression n, Integer indentation) {
 		   String ret = n.f0.choice.accept(this, indentation);
 		   
-		   if(n.f0.which == 6 || n.f0.which == 7 || n.f0.which == 8)  {
+		   if(n.f0.which == 5 || n.f0.which == 6 || n.f0.which == 7 || n.f0.which == 8)  {
 			   //These expressions will already assign result to a temp reg.
 			   return ret;
 		   }
+		   
+		   //Return result of expression in a register.
 		   String registerName = getTempRegister();
 		   return getIndentation(indentation) + registerName + " = " + ret;
 	   }
-	   
-	   public String returnExpressionResultRegister(String expressionInVapor) {
-		   String[] lines = expressionInVapor.split("\\n+");
-		   String lastLine = lines[lines.length-1];
-		   //Last line assigns expression result to a regsiter
-		   String[] splitLines = lastLine.split("\\s+");
-		   String register = splitLines[0];
-		   if(register.isEmpty()) {
-			   register = splitLines[1];
-		   }
-		   
-		   assert(register.startsWith("t."));		   
-		   return register;
-	   }
-	   
+	    
 	   
 	   /**
 	    * f0 -> <INTEGER_LITERAL>
@@ -621,15 +699,15 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	    * f3 -> Expression()
 	    * f4 -> "]"
 	    */
-	  /* public R visit(ArrayAllocationExpression n) {
-	      R _ret=null;
-	      n.f0.accept(this);
-	      n.f1.accept(this);
-	      n.f2.accept(this);
-	      n.f3.accept(this);
-	      n.f4.accept(this);
-	      return _ret;
-	   }*/
+	   public String visit(ArrayAllocationExpression n, Integer indentation) {
+		   //NOTE:make sure indentation parameter in all declarations
+	      String evalExpression = n.f3.accept(this,indentation);
+	      String evalResult = returnExpressionResultRegister(evalExpression);
+	      String alloc = "call :AllocArray(" + evalResult + ")";
+	      alloc = assign(getTempRegister(), alloc, indentation);
+	      alloc = concatentateInstructions(evalExpression, alloc);
+	      return alloc;
+	   }
 	   
 	   /**
 	    * f0 -> "new"
@@ -705,6 +783,20 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   }	
 	   }
 	   
+	   public String returnExpressionResultRegister(String expressionInVapor) {
+		   String[] lines = expressionInVapor.split("\\n+");
+		   String lastLine = lines[lines.length-1];
+		   //Last line assigns expression result to a regsiter
+		   String[] splitLines = lastLine.split("\\s+");
+		   String register = splitLines[0];
+		   if(register.isEmpty()) {
+			   register = splitLines[1];
+		   }
+		   
+		   assert(register.startsWith("t."));		   
+		   return register;
+	   }
+	   
 	   
 	   //Commonly used strings
 	   private String accessMemory(String var, int offset) {
@@ -728,6 +820,16 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 		   return concatentateInstructions(concatentateInstructions(ret,errorString),jumpLabel);
 	   }
 	   
+	   private String checkForOutOfBounds(String var, Integer indentation) {
+		   String boundsLabel = "bounds"+String.valueOf(outOfBoundsCounter);
+		   outOfBoundsCounter += 1;
+		   String ret = getIndentation(indentation) + "if " + var + " goto :" + boundsLabel;
+		   String errorString = getIndentation(indentation+1)+"Error(\"array index out of bounds\")";
+		   String jumpLabel = getIndentation(indentation) + boundsLabel + ":";
+		   return concatentateInstructions(concatentateInstructions(ret,errorString),jumpLabel);
+	   }
+	   
+	   
 	   //Simulate an if else statement using vapor jumps. t1 must be a boolean and
 	   //t2 and t3 can be arbitrary blocks of code
 	   private String ifStatement(String t1, String t2, String t3, Integer indentation) {
@@ -745,5 +847,16 @@ public class VisitFunctionDefinitions extends GJDepthFirst<String,Integer> {
 	   private String gotoLabel(String label,Integer indentation) {
 		   return getIndentation(indentation) + "goto " + ":" + label;
 	   }
+	   
+	   private String allocArrayFunction() {
+		   String allocString = "func AllocArray(size)";
+		   allocString = concatentateInstructions(allocString, getIndentation(1)+"bytes = MulS(size 4)");
+		   allocString = concatentateInstructions(allocString, getIndentation(1)+"bytes = Add(bytes 4)");
+		   allocString = concatentateInstructions(allocString, getIndentation(1)+"v = HeapAllocZ(bytes)");
+		   allocString = concatentateInstructions(allocString, getIndentation(1)+"[v] = size");
+		   allocString = concatentateInstructions(allocString, getIndentation(1)+"ret v");
+		   return allocString;
+	   }
+	   
 
 }

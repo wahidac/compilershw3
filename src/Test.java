@@ -1,145 +1,93 @@
-class Test{
+class BubbleSort{
     public static void main(String[] a){
-	int b;
-	int c;
-	boolean f;
-	boolean g;
-	boolean e;
-	Jamba j;
-	
-	/*g = true && true;
-	c = 540;
-	j = new Jamba();
-	j = (new Tootsie().returnNewJamba()).returnNewJamba();
-	j = new Tootsie();
-	b = j.yolo(c,g);
-	j = new Tootsie();
-	//b = j.roko();
-	f = true;
-	g = true;
-	e = f && g;
-	c = 3;
-	while(!(b < 20)) {
-		System.out.println(b);
-		b = b - c;
-	}*/
-	Snookie s;
-	s = new Snookie();
-	b = s.snookieTest();
-	
+	System.out.println(new BBS().Start(10));
     }
-	
 }
 
 
-class Jamba {
-	int f1;
-	boolean f2;
-	int f3;
-	
-	public int yolo(int c, boolean b) {
-		int ret;
-		if(b)
-			ret = this.jookie(c, !b);
-		else
-			ret = 100;
-		return ret;
+// This class contains the array of integers and
+// methods to initialize, print and sort the array
+// using Bublesort
+class BBS{
+    
+    int[] number ;
+    int size ;
+
+    // Invoke the Initialization, Sort and Printing
+    // Methods
+    public int Start(int sz){
+	int aux01 ;
+	aux01 = this.Init(sz);
+	aux01 = this.Print();
+	System.out.println(99999);
+	aux01 = this.Sort();
+	aux01 = this.Print();
+	return 0 ;
+    }
+
+ 
+    // Sort array of integers using Bublesort method
+    public int Sort(){
+	int nt ;
+	int i ;
+	int aux02 ;
+	int aux04 ;
+	int aux05 ;
+	int aux06 ;
+	int aux07 ;
+	int j ;
+	int t ;
+	i = size - 1 ;
+	aux02 = 0 - 1 ;
+	while (aux02 < i) {
+	    j = 1 ;
+	    //aux03 = i+1 ;
+	    while (j < (i+1)){
+		aux07 = j - 1 ;
+		aux04 = number[aux07] ;
+		aux05 = number[j] ;
+		if (aux05 < aux04) {
+		    aux06 = j - 1 ;
+		    t = number[aux06] ;
+		    number[aux06] = number[j] ;
+		    number[j] = t;
+		}
+		else nt = 0 ;
+		j = j + 1 ;
+	    }
+	    i = i - 1 ;
 	}
-	
-	
-	public int jookie(int a, boolean b) {
-		int ret;
-		if(b)
-			ret = 999;
-		else
-			ret = a;
-		return ret;
+	return 0 ;
+    }
+
+    // Printing method
+    public int Print(){
+	int j ;
+	j = 0 ;
+	while (j < (size)) {
+	    System.out.println(number[j]);
+	    j = j + 1 ;
 	}
+	return 0 ;
+    }
+    
+    // Initialize array of integers
+    public int Init(int sz){
+	size = sz ;
+	number = new int[sz] ;
 	
-	public int roko() {
-		return 100;
-	}
+	number[0] = 20 ;
+	number[1] = 7  ; 
+	number[2] = 12 ;
+	number[3] = 18 ;
+	number[4] = 2  ; 
+	number[5] = 11 ;
+	number[6] = 6  ; 
+	number[7] = 9  ; 
+	number[8] = 19 ; 
+	number[9] = 5  ;
 	
-	public Jamba returnNewJamba() {
-		return new Jamba();
-	}
-	
-	public boolean mugatu() {
-		return true;
-	}
-	
-	
+	return 0 ;	
+    }
+
 }
-
-class Mokie extends Jamba {
-	boolean a;
-	boolean b;
-	int f2;
-
-	
-	public boolean broko(int a) {
-		return true;
-	}	
-	
-	public int mufu() {
-		return 500;
-	}
-	
-	public boolean mufasa() {
-		f2 = 11111;
-		return false;
-	}
-	
-	public int roko() {
-		Mokie m;
-		return this.mufu();
-	}
-	
-	public int mojoJojo(int a) {
-		return f2;
-	}
-}
-
-class Tootsie extends Mokie {
-	Jamba f2;
-	int b;
-	
-	public int jookie(int a, boolean mojo) {
-		return a;
-	}
-	
-	public int mufu() {
-		return b;
-	}
-	
-	public int yolo(int a, boolean b) {
-		return 400;
-	}
-	
-}
-
-class Snookie extends Tootsie {
-	int f2;
-	public int snookieTest() {
-		int temp;
-		boolean bo;
-		int f2;
-		
-		bo = this.mufasa();
-		temp = this.mokuMoku();
-		f2 = 12345;
-		System.out.println(f2);
-		System.out.println(this.mojoJojo(f2));
-		System.out.println(this.mokuMoku());
-		b = 23;
-		System.out.println(this.mufu());
-		
-		return f2;
-	}
-	
-	public int mokuMoku() {
-		f2 = 989898;
-		return f2;
-	}
-}
-
